@@ -25,7 +25,7 @@
     <Compile Include="player_mat.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="test_1.py">
+    <Compile Include="test_tile_factory.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="test_player_mat.py">

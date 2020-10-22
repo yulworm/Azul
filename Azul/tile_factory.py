@@ -25,6 +25,10 @@ class tile_factory(object):
         self.discard = list()
         
 
+    def set_pile_contents(self, pile_idx, type_counts):
+        assert len(type_counts) == len(self.tile_type_order)
+        self.piles[pile_idx] = type_counts
+
     def fill_factory_piles(self):
         tile_cnt = 0
         if self.dev_mode:
@@ -39,16 +43,28 @@ class tile_factory(object):
             assert p_tiles == 1, 'The piles are not empty before calling fill_factory_piles'
             tile_cnt = self.get_total_tile_count()
 
-        # replace tiles from discard to bag if needed
-        if sum(self.bag) == 0:
-            self.bag = self.discard.copy()
-            self.discard = list()
+        chosen_tiles = list()
+        while len(chosen_tiles) < 20:
+            # replace tiles from discard to bag if needed
+            if len(self.bag) == 0:
 
-        # add 4 tiles to each pile and remove them from the bag
-        for i in range(1, self.nbr_piles):
-            for tile in np.random.choice(self.bag, 4, replace=False):
-                self.piles[i][tile] += 1
+                # if the discard is empty too, then we can't get more tiles
+                if len(self.discard) == 0:
+                    break
+                else:
+                    self.bag = self.discard.copy()
+                    self.discard = list()
+
+            nbr_tiles_missing = 20 - len(chosen_tiles)
+
+            for tile in np.random.choice(self.bag, min(nbr_tiles_missing, len(self.bag)), replace=False):
                 self.bag.remove(tile)
+                chosen_tiles.append(tile)
+
+
+        # add 4 tiles to each pile 
+        for i in range(0,len(chosen_tiles)):
+            self.piles[(i // 4) + 1][chosen_tiles[i]] += 1
 
         if self.dev_mode:
             #print(self)
@@ -68,6 +84,36 @@ class tile_factory(object):
                 piles.append((i,self.piles[i][tile_type]))
 
         return piles
+
+    def remove_tiles_from_pile(self,pile_idx,tile_type):
+        """
+        returns a tuple (nbr_tile_type_requested, penalty_tile)
+        If the requested tile type is not in the pile, then (0,0) is returned
+        If the type exists, then all other types in the pile are moved to the centre pile
+        """
+        return_vals = (0,0)
+        if self.piles[pile_idx][tile_type] == 0:
+            return return_vals
+
+        return_vals = (self.piles[pile_idx][tile_type], self.piles[pile_idx][self.tile_type_order.index('P')])
+
+        # remove the requested tile type and the penalty tile (if one was found). This can be done to any pile, even the centre
+        self.piles[pile_idx][tile_type] -= return_vals[0]
+        self.piles[pile_idx][self.tile_type_order.index('P')] -= return_vals[1]
+
+        # if not drawing from the centre pile, then move the remaining tiles to the centre
+        if pile_idx != 0:
+            for i in range(0,5):
+                self.piles[0][i] += self.piles[pile_idx][i]
+                self.piles[pile_idx][i] = 0
+
+        return return_vals
+
+    def return_penalty_tile(self):
+        # this should only be called if the stacks are empty
+        assert self.get_tile_count_in_piles() == 0
+
+        self.piles[0][self.tile_type_order.index('P')] = 1
 
     def _is_coherent(self):
         # the number of piles is correct
@@ -95,15 +141,29 @@ class tile_factory(object):
         return True
 
     def get_total_tile_count(self):
+        return self.get_tile_count_in_piles() + self.get_tile_count_in_bag() + self.get_tile_count_in_discard()
+
+    def get_count_for_pile_and_tile_type(self, pile_idx, tile_type):
+        return self.piles[pile_idx][tile_type]
+
+    def get_count_for_pile(self, pile_idx):
+        return sum(self.piles[pile_idx])
+
+    def get_tile_count_in_centre_pile(self):
+        return sum(self.piles[0])
+
+    def get_tile_count_in_piles(self):
         total_tiles = 0
         for i in range(0, self.nbr_piles):
-            #print(f'{i} current={total_tiles} + {sum(self.piles[i])}')
             total_tiles += sum(self.piles[i])
 
-        #print(f'current={total_tiles} + {len(self.bag) + len(self.discard)}')
-        total_tiles += len(self.bag) + len(self.discard)
-
         return total_tiles
+
+    def get_tile_count_in_bag(self):
+        return len(self.bag)
+
+    def get_tile_count_in_discard(self):
+        return len(self.discard)
 
     def __str__(self):
 
