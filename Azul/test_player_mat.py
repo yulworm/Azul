@@ -22,5 +22,20 @@ class Test_test_player_mat(unittest.TestCase):
         mat.penalty_stack = [4,0,1,0,0,0,1]
         self.assertEqual(mat.get_penalty_score(), -11)
 
+    def test_set_wall_for_testing(self):
+        mat = player_mat()
+        mat.set_wall_for_testing([[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]])
+        self.assertEqual(mat.wall,[[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]])
+
+    def test_get_wall_for_row_and_type(self):
+        mat = player_mat()
+        mat.set_wall_for_testing([[1,2,3,4,5],[5,1,2,3,4],[4,5,1,2,3],[3,4,5,1,2],[2,3,4,5,1]])
+
+        self.longMessage = True
+
+        for row in range(0,5):
+            for tt in range(0,5):
+                self.assertEqual(tt+1,mat.get_wall_for_row_and_type(row,tt),f'Row={row} Type={tt}')
+
 if __name__ == '__main__':
     unittest.main()

@@ -11,6 +11,8 @@ def main():
 
     print(game.available_actions(game.factory, game.players[game.player]))
 
+    #game._is_coherent()
+
 class Azul_game():
     """description of class"""
     def __init__(self):
@@ -68,13 +70,18 @@ class Azul_game():
         #self.switch_player()
 
         # Check for a winner
-        if all(pile == 0 for pile in self.piles):
-            self.winner = self.player
+        #if all(pile == 0 for pile in self.piles):
+           # self.winner = self.player
 
     def get_winner(self):
         return None # TODO:
 
     # number of tiles moved plus change in score plus change in number of completed stacks, in the case of a tie, choose randomly
+    # wall score - calculate the expected score of the wall, use % complete for tiles in rows being completed
 
+    def _is_coherent(self):
+
+        # are all the tiles accounted for
+        assert 201 == sum(player.get_total_tile_count() for player in self.players) + self.factory.get_total_tile_count()
 if __name__ == "__main__":
     main()

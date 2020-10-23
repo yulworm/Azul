@@ -42,6 +42,57 @@ class test_tile_factory(unittest.TestCase):
 
             factory.return_penalty_tile()
 
+    def test_fill_factory_piles_not_enough_in_bag_discard_empty(self):
+        factory = tile_factory(self.nbr_piles,self.tile_type_order)
+        factory.set_bag_contents([2,4,1,4,0]) #11 total
+        factory.fill_factory_piles()
+
+        self.assertEqual(12, factory.get_tile_count_in_piles())
+        self.assertEqual(1, factory.get_count_for_pile(0))
+        self.assertEqual(4, factory.get_count_for_pile(1))
+        self.assertEqual(4, factory.get_count_for_pile(2))
+        self.assertEqual(3, factory.get_count_for_pile(3))
+        self.assertEqual(0, factory.get_count_for_pile(4))
+        self.assertEqual(0, factory.get_count_for_pile(5))
+
+        self.assertEqual(0, factory.get_tile_count_in_bag())
+        self.assertEqual(0, factory.get_tile_count_in_discard())
+        
+    def test_fill_factory_piles_not_enough_in_bag_discard_has_more_than_enough(self):
+        factory = tile_factory(self.nbr_piles,self.tile_type_order)
+        factory.set_bag_contents([2,4,1,4,0]) #11 total
+        factory.set_discard_contents([3,0,5,2,6]) #16 total
+        factory.fill_factory_piles()
+
+        self.assertEqual(21, factory.get_tile_count_in_piles())
+        self.assertEqual(1, factory.get_count_for_pile(0))
+        self.assertEqual(4, factory.get_count_for_pile(1))
+        self.assertEqual(4, factory.get_count_for_pile(2))
+        self.assertEqual(4, factory.get_count_for_pile(3))
+        self.assertEqual(4, factory.get_count_for_pile(4))
+        self.assertEqual(4, factory.get_count_for_pile(5))
+
+        self.assertEqual(7, factory.get_tile_count_in_bag())
+        self.assertEqual(0, factory.get_tile_count_in_discard())
+
+    def test_fill_factory_piles_not_enough_in_bag_discard_does_not_have_enough(self):
+        factory = tile_factory(self.nbr_piles,self.tile_type_order)
+        factory.set_bag_contents([2,4,1,4,0]) #11 total
+        factory.set_discard_contents([0,0,0,0,6]) #6 total
+        factory.fill_factory_piles()
+
+        self.assertEqual(18, factory.get_tile_count_in_piles())
+        self.assertEqual(1, factory.get_count_for_pile(0))
+        self.assertEqual(4, factory.get_count_for_pile(1))
+        self.assertEqual(4, factory.get_count_for_pile(2))
+        self.assertEqual(4, factory.get_count_for_pile(3))
+        self.assertEqual(4, factory.get_count_for_pile(4))
+        self.assertEqual(1, factory.get_count_for_pile(5))
+
+        self.assertEqual(0, factory.get_tile_count_in_bag())
+        self.assertEqual(0, factory.get_tile_count_in_discard())
+
+
     def test_remove_tiles_from_pile_to_empty_centre(self):
         factory = tile_factory(self.nbr_piles,self.tile_type_order)
         
@@ -115,6 +166,16 @@ class test_tile_factory(unittest.TestCase):
         self.assertEqual(factory.get_count_for_pile_and_tile_type(0,3), 0)
         self.assertEqual(factory.get_count_for_pile_and_tile_type(0,4), 0)
         self.assertEqual(factory.get_count_for_pile_and_tile_type(0,5), 0)
+
+    def test_set_bag_contents(self):
+        factory = tile_factory(self.nbr_piles,self.tile_type_order)
+        factory.set_bag_contents([2,4,0,1,6])
+        self.assertEqual(factory.bag, [0,0,1,1,1,1,3,4,4,4,4,4,4])
+
+    def test_set_discard_contents(self):
+        factory = tile_factory(self.nbr_piles,self.tile_type_order)
+        factory.set_discard_contents([2,4,0,1,6])
+        self.assertEqual(factory.discard, [0,0,1,1,1,1,3,4,4,4,4,4,4])
 
     def empty_all_piles(self, factory):
         for i in range(1,factory.nbr_piles):

@@ -19,21 +19,49 @@ class player_mat(object):
         for i in range(0,self.nbr_stacks):
             self.wall.append([0,0,0,0,0])
 
+        self.floor_open = self.calculate_open_floor()
+
+    def calculate_open_floor(self):
+        open_floor = list()
+        for row in range(0,5):
+            nbr_slots = row + 1
+            open_slots = nbr_slots - sum(self.floor[row])
+            open_floor.append( list() )
+            for tile_type in range(0,5):
+                # if nothing is in the row yet 
+                if nbr_slots == open_slots:
+                    # if there is nothing on the wall for this type yet
+                    if self.get_wall_for_row_and_type(row,tile_type) == 0:
+                        open_floor[row].append(open_slots)
+                    else:
+                        open_floor[row].append(0)
+                else:
+                    # is this the type that is already using the row
+                    if self.floor[row][tile_type] > 0:
+                        open_floor[row].append(open_slots)
+                    else:
+                        open_floor[row].append(0)
+        return open_floor
+
+
     def get_rows_permitted_for_tile_type(self, tile_type):
         rows = list()
 
-        # a tile type is permitted in a row unless
         for row in range(0,5):
-            # the floor already contains another tile type
-            if sum(self.floor[row]) != self.floor[row][tile_type]:
-                continue
+            if self.floor_open[row][tile_type] > 0:
+                rows.append(row)
 
-            # the wall already contains that tile type
-            if self.wall[row][(tile_type - row)%5] == 1:
-                continue
-
-            rows.append(row)
         return rows
+
+    def get_wall_for_row_and_type(self, row, tile_type):
+        return self.wall[row][(tile_type+row)%5]
+
+    def set_wall_for_testing(self, values):
+        """
+        this is only to be used by unit tests
+        the shape of the values is how it is stored, not tile type order
+        """
+        self.wall = values
 
     def get_total_tile_count(self):
         total_tiles = 0

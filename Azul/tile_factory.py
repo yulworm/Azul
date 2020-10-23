@@ -25,10 +25,6 @@ class tile_factory(object):
         self.discard = list()
         
 
-    def set_pile_contents(self, pile_idx, type_counts):
-        assert len(type_counts) == len(self.tile_type_order)
-        self.piles[pile_idx] = type_counts
-
     def fill_factory_piles(self):
         tile_cnt = 0
         if self.dev_mode:
@@ -115,30 +111,6 @@ class tile_factory(object):
 
         self.piles[0][self.tile_type_order.index('P')] = 1
 
-    def _is_coherent(self):
-        # the number of piles is correct
-        if len(self.piles) != self.nbr_piles:
-            raise ValueError(f'There should be {self.nbr_piles} piles, but instead there are {len(self.piles)}')
-
-        for i in range(0, self.nbr_piles):
-            # the penalty tile is only ever in the centre pile
-            if i > 0 and self.piles[i][self.tile_type_order.index('P')] != 0:
-                raise ValueError(f'There is a penalty tile in pile {i}')
-            
-            # other than the centre pile, no pile has more than 4 tiles
-            if i > 0 and sum(self.piles[i]) > 4:
-                raise ValueError(f'Pile {i} has {sum(self.piles[i])}, but it should never have more than 4')
-
-            for j in range(0, 6):
-                # no tile should have a negative value
-                if self.piles[i][j] < 0:
-                    raise ValueError(f'Pile {i} Tile {j} has count = {self.piles[i][j]} but it should never be less than 0')
-
-        # the sum of all tiles is not more than 101
-        if self.get_total_tile_count() > 101:
-            raise ValueError(f'There are {self.get_total_tile_count()}, but there should never be more than 101')
-
-        return True
 
     def get_total_tile_count(self):
         return self.get_tile_count_in_piles() + self.get_tile_count_in_bag() + self.get_tile_count_in_discard()
@@ -165,6 +137,27 @@ class tile_factory(object):
     def get_tile_count_in_discard(self):
         return len(self.discard)
 
+    def set_pile_contents(self, pile_idx, type_counts):
+        """this method is only supposed to be used for testing"""
+        assert len(type_counts) == len(self.tile_type_order)
+        self.piles[pile_idx] = type_counts
+
+    def set_bag_contents(self, type_counts):
+        """this method is only supposed to be used for testing"""
+        assert len(type_counts) == len(self.tile_type_order) -1
+        self.bag = list()
+        for tile_type in range(0, len(self.tile_type_order) -1):
+            for i in range(0,type_counts[tile_type]):
+                self.bag.append(tile_type)
+
+    def set_discard_contents(self, type_counts):
+        """this method is only supposed to be used for testing"""
+        assert len(type_counts) == len(self.tile_type_order) -1
+        self.discard = list()
+        for tile_type in range(0, len(self.tile_type_order) -1):
+            for i in range(0,type_counts[tile_type]):
+                self.discard.append(tile_type)
+
     def __str__(self):
 
         out_str = 'Piles -------------\n'
@@ -183,3 +176,32 @@ class tile_factory(object):
         out_str += f'Discard {self.discard}\n'
 
         return out_str
+
+    def _is_coherent(self):
+        """
+        this method is used to test if the current state of the factory breaks any rules
+        """
+
+        # the number of piles is correct
+        if len(self.piles) != self.nbr_piles:
+            raise ValueError(f'There should be {self.nbr_piles} piles, but instead there are {len(self.piles)}')
+
+        for i in range(0, self.nbr_piles):
+            # the penalty tile is only ever in the centre pile
+            if i > 0 and self.piles[i][self.tile_type_order.index('P')] != 0:
+                raise ValueError(f'There is a penalty tile in pile {i}')
+            
+            # other than the centre pile, no pile has more than 4 tiles
+            if i > 0 and sum(self.piles[i]) > 4:
+                raise ValueError(f'Pile {i} has {sum(self.piles[i])}, but it should never have more than 4')
+
+            for j in range(0, 6):
+                # no tile should have a negative value
+                if self.piles[i][j] < 0:
+                    raise ValueError(f'Pile {i} Tile {j} has count = {self.piles[i][j]} but it should never be less than 0')
+
+        # the sum of all tiles is not more than 101
+        if self.get_total_tile_count() > 101:
+            raise ValueError(f'There are {self.get_total_tile_count()}, but there should never be more than 101')
+
+        return True
