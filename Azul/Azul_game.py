@@ -9,7 +9,12 @@ def main():
     print(f'Player {game.current_player_idx}')
     print(game.players[game.current_player_idx])
 
-    print(game.available_actions(game.factory, game.players[game.current_player_idx]))
+    action = game.available_actions(game.factory, game.players[game.current_player_idx])[10]
+    print('--------------------------')
+    print(f'making move {action}')
+    print('--------------------------')
+    game.move(action)
+    print(game.players[game.current_player_idx])
 
     #game._is_coherent()
 
@@ -33,6 +38,12 @@ class Azul_game():
 
     @classmethod
     def available_actions(cls, factory, mat):
+        """
+        An action consists of 3 pieces of information
+        - tile type we will be moving
+        - from which pile will we draw the tiles
+        - to which row will we be moving the tiles
+        """
         avail_actions = list()
         for tile_type in range(0,5):
             mat_rows = mat.get_rows_permitted_for_tile_type(tile_type)
@@ -56,7 +67,7 @@ class Azul_game():
         """
         Switch the current player to the other player.
         """
-        self.current_player_idx = self.current_player_idx // 2
+        self.current_player_idx = (self.current_player_idx + 1) // self.nbr_players
 
     def move(self, action):
         """
@@ -76,16 +87,15 @@ class Azul_game():
         # get the tiles from the factory
         nbr_tiles, penalty = self.factory.remove_tiles_from_pile(from_pile, tile_type)
 
-        if to_stack != self.penalty_stack_row_idx:
+        if to_stack == self.penalty_stack_row_idx:
             # these tiles are going straight to penalty
-            self.players[current_player_idx].add_tiles_to_penalty(nbr_tiles, tile_type)
+            self.players[self.current_player_idx].add_tiles_to_penalty(nbr_tiles, tile_type)
         else:
             # put the tiles on the floor
-            self.players[current_player_idx].move_tiles_to_row(nbr_tiles, tile_type, to_stack)
+            self.players[self.current_player_idx].move_tiles_to_row(nbr_tiles, tile_type, to_stack)
 
-        # add the penalty we might have picked up along with the other tiles. 
-        # There is no condition since the value will just be 0 or 1, so it can always be added
-        self.players[current_player_idx].add_penalty_tile_to_penalty_stack(penalty)
+        if penalty == 1:
+            self.players[self.current_player_idx].add_penalty_tile_to_penalty_stack(penalty)
 
         # check if the round is over
         if self.factory.get_tile_count_in_piles() == 0:
@@ -97,7 +107,7 @@ class Azul_game():
         else:
             # check if the player just did something which will end the game soon
             if not self.is_last_round:
-                self.is_last_round = players[current_player_idx].has_a_completed_row()
+                self.is_last_round = self.players[self.current_player_idx].has_a_completed_row()
             # pass the baton to the next player
             self.switch_player()
 
@@ -145,10 +155,10 @@ class Azul_game():
         Returns the number of the winning player
         """
         top_score = -1
-        for player in players:
+        for player in self.players:
             if player.get_total_score() > top_score:
                 top_score = player.get_total_score() 
-                self.winner = players.indexOf(player)
+                self.winner = self.players.indexOf(player)
 
     def _is_coherent(self):
 

@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>686fe68a-10b5-4483-ad0d-947ef38f51c4</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Azul.py</StartupFile>
+    <StartupFile>Azul_game.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,7 +21,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Azul.py" />
+    <Compile Include="Azul_game.py" />
     <Compile Include="player_mat.py">
       <SubType>Code</SubType>
     </Compile>
