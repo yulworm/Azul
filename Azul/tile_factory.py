@@ -26,6 +26,9 @@ class tile_factory(object):
         
 
     def fill_factory_piles(self):
+        """
+        return True if at least one tile was placed, otherwise False
+        """
         tile_cnt = 0
         if self.dev_mode:
             # we assume that the penalty tile was placed in the centre by the previous step
@@ -68,6 +71,7 @@ class tile_factory(object):
 
             self._is_coherent()
 
+        return len(chosen_tiles) > 0
 
     def get_piles_with_tile_type(self, tile_type):
         """
@@ -150,13 +154,14 @@ class tile_factory(object):
             for i in range(0,type_counts[tile_type]):
                 self.bag.append(tile_type)
 
-    def set_discard_contents(self, type_counts):
-        """this method is only supposed to be used for testing"""
+    def add_tiles_to_discard(self, type_counts):
+        # there should not be a penalty type
         assert len(type_counts) == len(self.tile_type_order) -1
-        self.discard = list()
-        for tile_type in range(0, len(self.tile_type_order) -1):
-            for i in range(0,type_counts[tile_type]):
-                self.discard.append(tile_type)
+
+        for type in range(0, len(self.tile_type_order) -1):
+            for i in range(0, type_counts[type]):
+                self.discard.append(type) 
+
 
     def __str__(self):
 

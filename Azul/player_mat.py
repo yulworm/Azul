@@ -9,7 +9,7 @@ class player_mat(object):
         self.cummulative_score = 0
 
         self.penalty_stack = [0,0,0,0,0,0,0]
-        self.penalty_overflow = [0,0,0,0,0,0,0]
+        #self.penalty_overflow = [0,0,0,0,0,0,0]
 
         self.floor = list()
         for i in range(0,self.nbr_stacks):
@@ -24,12 +24,70 @@ class player_mat(object):
 
         # a tile type is permitted in a row unless
         for row in range(0,5):
+            # the floor already contains another tile type
+            if sum(self.floor[row]) != self.floor[row][tile_type]:
+                continue
 
-            rows.append(row)
+            # the wall already contains that tile type
+            if self.wall[row][(tile_type - row)%5] == 1:
+                continue
+
+            # there is room in the stack
+            if self.floor[row][tile_type] < (row + 1):
+                rows.append(row)
         return rows
+
+    def get_floor_for_row_and_type(self, row, tile_type):
+        """
+        this method really only exists for testing
+        """
+        return self.floor[row][tile_type]
+
+    def move_tiles_to_row(self, nbr_tiles, tile_type, row):
+        # check that this is a permitted move for the type
+        assert row in self.get_rows_permitted_for_tile_type(tile_type)
+
+        space_in_stack = row + 1 - self.floor[row][tile_type]
+
+        self.floor[row][tile_type] += min(space_in_stack, nbr_tiles)
+
+        # put the overflow in the penalty
+        self.add_tiles_to_penalty(max((nbr_tiles - space_in_stack), 0), tile_type)
+
+
+    def process_end_of_round(self, factory):
+        """
+        return tuple (
+            True is the player ended the game, otherwise False
+            List of tiles to be discarded
+            )
+        """
+        discard = self.penalty_stack.copy()
+
+        # loop through rows and check for completed floor stacks
+            # mark wall tile
+            # move other tiles to discard
+            # increase cummulative score
+
+        # decrease cummulative score by penalty
+
+        # flush the penalty stack
+
+        raise Exception()
+        return (self.has_a_completed_row(), discard)
 
     def get_wall_for_row_and_type(self, row, tile_type):
         return self.wall[row][(tile_type+row)%5]
+
+    def set_wall_for_row_and_type(self, row, tile_type, value):
+        self.wall[row][(tile_type+row)%5] = value
+        return (tile_type+row)%5
+
+    def add_tiles_to_penalty(self, nbr_tiles, tile_type):
+        self.penalty_stack[tile_type] += nbr_tiles
+
+    def add_penalty_tile_to_penalty_stack(self, penalty):
+        self.add_tiles_to_penalty(penalty, self.tile_type_order.index('P'))
 
     def set_wall_for_testing(self, values):
         """
@@ -37,6 +95,9 @@ class player_mat(object):
         the shape of the values is how it is stored, not tile type order
         """
         self.wall = values
+
+    def get_nbr_tiles_in_penalty(self):
+        return sum(self.penalty_stack)
 
     def get_total_tile_count(self):
         total_tiles = 0
@@ -49,13 +110,11 @@ class player_mat(object):
 
         total_tiles += sum(self.penalty_stack)
 
-        total_tiles += sum(self.penalty_overflow)
-
         return total_tiles
 
     def get_penalty_score(self):
-        pt = sum(self.penalty_stack)
-        assert 0 <= pt <= 7, f'Penalty stack has too high a total {pt} - {self.penalty_stack}'
+        # the penalty stack can contain more that 7 tiles, but we stop counting for penalties after 7
+        pt = min(sum(self.penalty_stack), 7)
 
         # first 2 are -1 points each
         total = min(pt, 2) * -1
@@ -85,6 +144,13 @@ class player_mat(object):
         total_score += 0 # TODO:
         
         return total_score
+
+    def has_a_completed_row(self):
+        for i in range(0,5):
+            if sum(self.wall[i]) + sum(self.floor[i])//(i+1) == 5:
+                return True
+
+        return False
 
     def __str__(self):
         return_str = f'Score={self.get_total_score()}\n'
@@ -128,12 +194,5 @@ class player_mat(object):
                 return_str += self.tile_type_order[k]
         return_str += f'\n'
 
-
-        return_str += f'Penalty Overflow\t'
-
-        for i in range(0, len(self.tile_type_order)):
-            for j in range(0,self.penalty_overflow[i]):
-                return_str += self.tile_type_order[k]
-        return_str += f'\n'
 
         return return_str

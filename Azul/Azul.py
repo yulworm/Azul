@@ -6,23 +6,29 @@ def main():
 
     print(game.factory)
     
-    print(f'Player {game.player}')
-    print(game.players[game.player])
+    print(f'Player {game.current_player_idx}')
+    print(game.players[game.current_player_idx])
 
-    print(game.available_actions(game.factory, game.players[game.player]))
+    print(game.available_actions(game.factory, game.players[game.current_player_idx]))
 
     #game._is_coherent()
 
 class Azul_game():
     """description of class"""
+    penalty_stack_row_idx = 9
+    is_last_round = False
+    nbr_players = 2
+
     def __init__(self):
         self.factory = tile_factory(6, player_mat.tile_type_order)
 
         self.factory.fill_factory_piles()
 
-        self.players = [player_mat(), player_mat()]
+        self.players = list()
+        for i in range(0,self.nbr_players):
+            self.players.append( player_mat() )
     
-        self.player = 0
+        self.current_player_idx = 0
         self.winner = None
 
     @classmethod
@@ -30,25 +36,27 @@ class Azul_game():
         avail_actions = list()
         for tile_type in range(0,5):
             mat_rows = mat.get_rows_permitted_for_tile_type(tile_type)
+            # the penalty stack is always a valid destination, we fake that with an index 
+            mat_rows.append(cls.penalty_stack_row_idx)
             for pile_idx, t_cnt in factory.get_piles_with_tile_type(tile_type):
                 for row_idx in mat_rows:
                     avail_actions.append((tile_type, pile_idx, row_idx))
 
         return avail_actions; 
 
-    @classmethod
-    def other_player(cls, player):
+#    @classmethod
+#    def other_player(cls, player):
         """
         other_player(player) returns the player that is not
         `player`. Assumes `player` is either 0 or 1.
         """
-        return 0 if player == 1 else 1
+#        return 0 if player == 1 else 1
 
     def switch_player(self):
         """
         Switch the current player to the other player.
         """
-        self.player = Azul_game.other_player(self.player)
+        self.current_player_idx = self.current_player_idx // 2
 
     def move(self, action):
         """
@@ -65,6 +73,36 @@ class Azul_game():
         #elif count < 1 or count > self.piles[pile]:
         #    raise Exception("Invalid number of objects")
 
+        # get the tiles from the factory
+        nbr_tiles, penalty = self.factory.remove_tiles_from_pile(from_pile, tile_type)
+
+        if to_stack != self.penalty_stack_row_idx:
+            # these tiles are going straight to penalty
+            self.players[current_player_idx].add_tiles_to_penalty(nbr_tiles, tile_type)
+        else:
+            # put the tiles on the floor
+            self.players[current_player_idx].move_tiles_to_row(nbr_tiles, tile_type, to_stack)
+
+        # add the penalty we might have picked up along with the other tiles. 
+        # There is no condition since the value will just be 0 or 1, so it can always be added
+        self.players[current_player_idx].add_penalty_tile_to_penalty_stack(penalty)
+
+        # check if the round is over
+        if self.factory.get_tile_count_in_piles() == 0:
+            # score this round and setup the next round 
+            # if the game is over, determine the winner
+            if self.process_end_round():
+                self.set_winner()
+            # the end of round method also sets the next player
+        else:
+            # check if the player just did something which will end the game soon
+            if not self.is_last_round:
+                self.is_last_round = players[current_player_idx].has_a_completed_row()
+            # pass the baton to the next player
+            self.switch_player()
+
+            
+
         # Update pile
         #self.piles[pile] -= count
         #self.switch_player()
@@ -73,11 +111,44 @@ class Azul_game():
         #if all(pile == 0 for pile in self.piles):
            # self.winner = self.player
 
-    def get_winner(self):
-        return None # TODO:
+    def process_end_round(self):
+        """
+        Return True if the game is over
+        """
+        player_end_of_game = false
 
-    # number of tiles moved plus change in score plus change in number of completed stacks, in the case of a tie, choose randomly
-    # wall score - calculate the expected score of the wall, use % complete for tiles in rows being completed
+        # process each player
+        for player in self.players:
+            (ended_game, discard_tiles) = player.process_end_of_round()
+
+            # check if they had the penalty tile
+            if discard[player_mat.tile_type_order.indexOf('P')] == 1:
+                # they become the current player
+                self.current_player_idx = self.players.indexOf(player)
+
+                # put the tile back in the factory
+                self.factory.return_penalty_tile()
+
+                discard[player_mat.tile_type_order.indexOf('P')] = 0
+
+            # put the discard tiles in the factory discard
+            self.factory
+
+            if not player_end_of_game:
+                player_end_of_game = ended_game
+
+        # If none of the players ended the game and at least one tile can still be placed, then the game continues
+        return player_end_of_game or factory.fill_factory_piles()
+
+    def set_winner(self):
+        """
+        Returns the number of the winning player
+        """
+        top_score = -1
+        for player in players:
+            if player.get_total_score() > top_score:
+                top_score = player.get_total_score() 
+                self.winner = players.indexOf(player)
 
     def _is_coherent(self):
 

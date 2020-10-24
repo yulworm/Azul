@@ -37,5 +37,41 @@ class Test_test_player_mat(unittest.TestCase):
             for tt in range(0,5):
                 self.assertEqual(tt+1,mat.get_wall_for_row_and_type(row,tt),f'Row={row} Type={tt}')
 
+    def test_move_tiles_to_row_fill_from_zero(self):
+        mat = player_mat()
+        mat.move_tiles_to_row(4,1,3)
+
+        self.assertEqual(4, mat.get_floor_for_row_and_type(3,1))
+
+    def test_move_tiles_to_row_partially_fill(self):
+        mat = player_mat()
+        mat.move_tiles_to_row(2,1,3)
+
+        self.assertEqual(2, mat.get_floor_for_row_and_type(3,1))
+
+    def test_move_tiles_to_row_fill(self):
+        mat = player_mat()
+        mat.move_tiles_to_row(2,1,3)
+        mat.move_tiles_to_row(2,1,3)
+
+        self.assertEqual(4, mat.get_floor_for_row_and_type(3,1))
+
+    def test_move_tiles_to_row_overfill(self):
+        mat = player_mat()
+        mat.move_tiles_to_row(7,1,3)
+
+        self.assertEqual(4, mat.get_floor_for_row_and_type(3,1))
+        self.assertEqual(3, mat.get_nbr_tiles_in_penalty())
+
+    def test_move_tiles_to_row_already_full_row(self):
+        mat = player_mat()
+        mat.move_tiles_to_row(4,1,3)
+
+        with self.assertRaises(AssertionError):
+            mat.move_tiles_to_row(4,1,3)
+
+    def test_has_a_completed_row(self):
+        raise Exception()
+
 if __name__ == '__main__':
     unittest.main()
