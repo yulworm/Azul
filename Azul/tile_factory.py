@@ -75,7 +75,8 @@ class tile_factory(object):
 
     def get_piles_with_tile_type(self, tile_type):
         """
-        return a list of tuples containing (pile_idx, tile_type_count)
+        This function identifies all of the piles, including the centre, that contain at least one tile of the requested type
+        Return a list of tuples containing (pile_idx, tile_type_count)
         """
         piles = list()
 
@@ -109,7 +110,11 @@ class tile_factory(object):
 
         return return_vals
 
-    def return_penalty_tile(self):
+    def return_penalty_tile_to_centre(self):
+        """
+        This method is intended for use when reseting the board between rounds.
+        It puts the penalty tile in the centre pile.
+        """
         # this should only be called if the stacks are empty
         assert self.get_tile_count_in_piles() == 0
 
@@ -117,6 +122,9 @@ class tile_factory(object):
 
 
     def get_total_tile_count(self):
+        """
+        This method is intended to be used when validating the state of the board, to ensure that no tiles are missing
+        """
         return self.get_tile_count_in_piles() + self.get_tile_count_in_bag() + self.get_tile_count_in_discard()
 
     def get_count_for_pile_and_tile_type(self, pile_idx, tile_type):
@@ -147,7 +155,8 @@ class tile_factory(object):
         self.piles[pile_idx] = type_counts
 
     def set_bag_contents(self, type_counts):
-        """this method is only supposed to be used for testing"""
+        """
+        """
         assert len(type_counts) == len(self.tile_type_order) -1
         self.bag = list()
         for tile_type in range(0, len(self.tile_type_order) -1):

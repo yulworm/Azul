@@ -11,6 +11,7 @@
     <OutputPath>.</OutputPath>
     <Name>Azul</Name>
     <RootNamespace>Azul</RootNamespace>
+    <TestFramework>unittest</TestFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -25,15 +26,24 @@
     <Compile Include="player_mat.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="test_tile_factory.py">
+    <Compile Include="scratch.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="test_player_mat.py">
+    <Compile Include="tests\test_game.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\test_tile_factory.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\test_player_mat.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="tile_factory.py">
       <SubType>Code</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="tests\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
