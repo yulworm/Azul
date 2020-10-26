@@ -4,12 +4,9 @@ class player_mat(object):
     tile_type_order = ['A', 'Y', 'R', 'B', 'W', 'P']
     nbr_stacks = 5
     def __init__(self):
-        #self.tile_type_order = tile_order
-
         self.cummulative_score = 0
 
-        self.penalty_stack = [0,0,0,0,0,0,0]
-        #self.penalty_overflow = [0,0,0,0,0,0,0]
+        self.penalty_stack = [0,0,0,0,0,0]
 
         self.floor = list()
         for i in range(0,self.nbr_stacks):
@@ -72,7 +69,7 @@ class player_mat(object):
                 for tt in range(0,5):
                     if self.floor[row][tt] > 0:
                         # mark wall tile
-                        self.set_wall_for_row_and_type(row,tt)
+                        self.set_wall_for_row_and_type(row,tt,1)
             
                         # move all but one tile to discard
                         discard[tt] += self.floor[row][tt]-1
@@ -105,8 +102,8 @@ class player_mat(object):
     def add_tiles_to_penalty(self, nbr_tiles, tile_type):
         self.penalty_stack[tile_type] += nbr_tiles
 
-    def add_penalty_tile_to_penalty_stack(self, penalty):
-        self.add_tiles_to_penalty(penalty, self.tile_type_order.index('P'))
+    def add_penalty_tile_to_penalty_stack(self):
+        self.add_tiles_to_penalty(1, self.tile_type_order.index('P'))
 
     def set_wall_for_testing(self, values):
         """

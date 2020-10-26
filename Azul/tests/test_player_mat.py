@@ -79,11 +79,11 @@ class Test_test_player_mat(unittest.TestCase):
     def test_process_end_of_round_basic(self):
         mat = player_mat()
 
-        # fill row 1 with Azul
+        # fill row 0 with Azul
         mat.move_tiles_to_row(1,0,0)
-        # fill row 5 with Black
-        mat.move_tiles_to_row(5,4,3)
-        # partially fill row 4 with Black
+        # fill row 4 with Black
+        mat.move_tiles_to_row(5,3,4)
+        # partially fill row 3 with Black
         mat.move_tiles_to_row(2,3,3)
 
         ended_game, discard = mat.process_end_of_round()
@@ -112,8 +112,47 @@ class Test_test_player_mat(unittest.TestCase):
         self.assertEqual(2, mat.cummulative_score)
 
         # all the tiles removed from the floor stack should be returned so that they can go in the discard
-        expected_discard = [3,3,3,3]
-        self.assertTrue(len(discard) + sum(discard),len(expected_discard) + sum(expected_discard))
+        self.assertEqual(discard, [0,0,0,4,0,0])
+
+    def test_process_end_of_round_basic_with_penalty(self):
+        mat = player_mat()
+
+        # fill row 0 with Azul
+        mat.move_tiles_to_row(1,0,0)
+        # fill row 4 with Black
+        mat.move_tiles_to_row(7,3,4) # this should put 2 in penalty
+        # partially fill row 3 with Black
+        mat.move_tiles_to_row(2,3,3)
+
+        mat.add_penalty_tile_to_penalty_stack()
+
+        ended_game, discard = mat.process_end_of_round()
+
+        # it is not the end of the game
+        self.assertFalse(ended_game)
+
+        # for a floor stack that was complete
+        # the wall should be updated for the right tile type
+        # the floor stack should be empty
+        self.assertEqual(1,mat.get_wall_for_row_and_type(0,0))
+        self.assertEqual(0, sum(mat.floor[0]))
+        self.assertEqual(1,mat.get_wall_for_row_and_type(4,3))
+        self.assertEqual(0, sum(mat.floor[4]))
+
+        # for a floor stack that was incomplete
+        # the wall should be not have changed
+        # the floor stack should not be changed
+        self.assertEqual(0,mat.get_wall_for_row_and_type(3,3))
+        self.assertEqual(2, sum(mat.floor[3]))
+
+        # penalty stack is now empty
+        self.assertEqual(0,mat.get_nbr_tiles_in_penalty())
+
+        # score changed properly
+        self.assertEqual(0, mat.cummulative_score) # +2 -4
+
+        # all the tiles removed from the floor stack should be returned so that they can go in the discard
+        self.assertEqual(discard, [0,0,0,6,0,1])
 
  #  def test_add_tiles_to_penalty(self):
  #      self.fail('Not implemented')
