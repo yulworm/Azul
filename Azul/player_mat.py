@@ -55,7 +55,7 @@ class player_mat(object):
         self.add_tiles_to_penalty(max((nbr_tiles - space_in_stack), 0), tile_type)
 
 
-    def process_end_of_round(self, factory):
+    def process_end_of_round(self):
         """
         return tuple (
             True is the player ended the game, otherwise False
@@ -64,22 +64,41 @@ class player_mat(object):
         """
         discard = self.penalty_stack.copy()
 
-        # loop through rows and check for completed floor stacks
-            # mark wall tile
-            # move other tiles to discard
-            # increase cummulative score
+        # loop through rows
+        for row in range(0,5):
+            # check for completed floor stacks
+            if sum(self.floor[row]) == row + 1:
+                # for the tile type that is in the stack
+                for tt in range(0,5):
+                    if self.floor[row][tt] > 0:
+                        # mark wall tile
+                        self.set_wall_for_row_and_type(row,tt)
+            
+                        # move all but one tile to discard
+                        discard[tt] += self.floor[row][tt]-1
 
-        # decrease cummulative score by penalty
+                        # set the floor to zero
+                        self.floor[row][tt] = 0
+            
+                        # increase cummulative score
+                        self.cummulative_score += self.get_score_for_wall_tile(row,tt)
+
+        # decrease cummulative score by penalty - it can't go below 0
+        self.cummulative_score = max(self.cummulative_score + self.get_penalty_score(), 0)
 
         # flush the penalty stack
+        self.penalty_stack = [0,0,0,0,0,0]
 
-        raise Exception()
         return (self.has_a_completed_row(), discard)
 
     def get_wall_for_row_and_type(self, row, tile_type):
         return self.wall[row][(tile_type+row)%5]
 
     def set_wall_for_row_and_type(self, row, tile_type, value):
+        """
+        sets the corresponding wall value
+        Returns the wall index of the tile type
+        """
         self.wall[row][(tile_type+row)%5] = value
         return (tile_type+row)%5
 
@@ -102,10 +121,10 @@ class player_mat(object):
     def get_total_tile_count(self):
         total_tiles = 0
 
-        for i in range(0, nbr_stacks):
+        for i in range(0, self.nbr_stacks):
             total_tiles += sum(self.floor[i])
 
-        for i in range(0, nbr_stacks):
+        for i in range(0, self.nbr_stacks):
             total_tiles += sum(self.wall[i])
 
         total_tiles += sum(self.penalty_stack)
@@ -126,6 +145,52 @@ class player_mat(object):
         total += min(max(pt-5, 0), 2) * -3
         
         return total
+
+    def get_score_for_wall_tile(self,row,tile_type):
+        col = (tile_type+row)%5
+
+        col_score = 0
+        row_score = 0
+
+        col_streak_has_tile = False
+        row_streak_has_tile = False
+        col_streak = 0
+        row_streak = 0
+
+        for i in range(0,5):
+            # row streak broken
+            if self.wall[row][i] == 0:
+                if row_streak_has_tile:
+                    break
+                else:
+                    row_streak = 0
+            else:
+                row_streak += self.wall[row][i]
+                # we are either already knew we were in a streak, or we just found out
+                row_streak_has_tile = row_streak_has_tile or i==col
+
+        if row_streak == 1:
+            row_score = 0
+        else:
+            row_score = row_streak
+
+        for i in range(0,5):
+            # col streak broken
+            if self.wall[i][col] == 0:
+                if col_streak_has_tile:
+                    break
+                else:
+                    col_streak = 0
+            else:
+                col_streak += self.wall[i][col]
+                col_streak_has_tile = (col_streak_has_tile or (i==row))
+
+        if col_streak == 1:
+            col_score = 0
+        else:
+            col_score = col_streak
+
+        return max(col_score + row_score, 1)
 
     def get_total_score(self):
         total_score = self.cummulative_score
