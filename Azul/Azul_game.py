@@ -125,7 +125,7 @@ class Azul_game():
         """
         Return True if the game is over
         """
-        player_end_of_game = false
+        player_end_of_game = False
 
         # process each player
         for player in self.players:
@@ -137,12 +137,12 @@ class Azul_game():
                 self.current_player_idx = self.players.indexOf(player)
 
                 # put the tile back in the factory
-                self.factory.return_penalty_tile()
+                self.factory.return_penalty_tile_to_centre()
 
                 discard[player_mat.tile_type_order.indexOf('P')] = 0
 
             # put the discard tiles in the factory discard
-            self.factory
+            self.factory.set_bag_contents(discard)
 
             if not player_end_of_game:
                 player_end_of_game = ended_game
@@ -160,9 +160,12 @@ class Azul_game():
                 top_score = player.get_total_score() 
                 self.winner = self.players.indexOf(player)
 
+    def get_total_tile_count(self):
+        return sum(player.get_total_tile_count() for player in self.players) + self.factory.get_total_tile_count()
+
     def _is_coherent(self):
 
         # are all the tiles accounted for
-        assert 201 == sum(player.get_total_tile_count() for player in self.players) + self.factory.get_total_tile_count()
+        assert 201 == self.get_total_tile_count()
 if __name__ == "__main__":
     main()
