@@ -67,7 +67,7 @@ class Azul_game():
         """
         Switch the current player to the other player.
         """
-        self.current_player_idx = (self.current_player_idx + 1) // self.nbr_players
+        self.current_player_idx = (self.current_player_idx + 1) % self.nbr_players
 
     def move(self, action):
         """
@@ -95,7 +95,7 @@ class Azul_game():
             self.players[self.current_player_idx].move_tiles_to_row(nbr_tiles, tile_type, to_stack)
 
         if penalty == 1:
-            self.players[self.current_player_idx].add_penalty_tile_to_penalty_stack(penalty)
+            self.players[self.current_player_idx].add_penalty_tile_to_penalty_stack()
 
         # check if the round is over
         if self.factory.get_tile_count_in_piles() == 0:
@@ -131,24 +131,24 @@ class Azul_game():
         for player in self.players:
             (ended_game, discard_tiles) = player.process_end_of_round()
 
-            # check if they had the penalty tile
-            if discard[player_mat.tile_type_order.indexOf('P')] == 1:
+            # check if they had the penalty tile 
+            if discard_tiles[player_mat.tile_type_order.index('P')] == 1:
                 # they become the current player
-                self.current_player_idx = self.players.indexOf(player)
+                self.current_player_idx = self.players.index(player)
 
                 # put the tile back in the factory
                 self.factory.return_penalty_tile_to_centre()
 
-                discard[player_mat.tile_type_order.indexOf('P')] = 0
+                discard_tiles[player_mat.tile_type_order.index('P')] = 0
 
             # put the discard tiles in the factory discard
-            self.factory.set_bag_contents(discard)
+            self.factory.add_tiles_to_discard(discard_tiles)
 
             if not player_end_of_game:
                 player_end_of_game = ended_game
 
         # If none of the players ended the game and at least one tile can still be placed, then the game continues
-        return player_end_of_game or factory.fill_factory_piles()
+        return player_end_of_game or not self.factory.fill_factory_piles()
 
     def set_winner(self):
         """
@@ -158,7 +158,7 @@ class Azul_game():
         for player in self.players:
             if player.get_total_score() > top_score:
                 top_score = player.get_total_score() 
-                self.winner = self.players.indexOf(player)
+                self.winner = self.players.index(player)
 
     def get_total_tile_count(self):
         return sum(player.get_total_tile_count() for player in self.players) + self.factory.get_total_tile_count()
@@ -167,5 +167,17 @@ class Azul_game():
 
         # are all the tiles accounted for
         assert 201 == self.get_total_tile_count()
+
+    def __str__(self):
+        return_str = 'Player 0\n'
+        return_str += str( self.players[0] )
+
+        return_str += str( self.factory )
+
+        return_str += 'Player 1\n'
+        return_str += str( self.players[1] )
+
+        return return_str
+
 if __name__ == "__main__":
     main()

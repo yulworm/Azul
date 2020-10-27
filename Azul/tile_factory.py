@@ -157,17 +157,16 @@ class tile_factory(object):
     def set_bag_contents(self, type_counts):
         """
         """
-        assert len(type_counts) == len(self.tile_type_order) -1
+        assert len(type_counts) == len(self.tile_type_order)
         self.bag = list()
-        for tile_type in range(0, len(self.tile_type_order) -1):
+        for tile_type in range(0, len(type_counts)):
             for i in range(0,type_counts[tile_type]):
                 self.bag.append(tile_type)
 
     def add_tiles_to_discard(self, type_counts):
-        # there should not be a penalty type
-        assert len(type_counts) == len(self.tile_type_order) -1
+        assert len(type_counts) == len(self.tile_type_order)
 
-        for type in range(0, len(self.tile_type_order) -1):
+        for type in range(0, len(type_counts)):
             for i in range(0, type_counts[type]):
                 self.discard.append(type) 
 

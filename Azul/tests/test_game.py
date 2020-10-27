@@ -30,14 +30,16 @@ class Test_test_game(unittest.TestCase):
         actions = game.available_actions(game.factory, game.players[player])
         nbr_actions = len(actions)
 
-        while len(actions) > 0:
+        round = 1
+        while len(actions) > 0 and game.winner is None:
             # make a random move
             game.move( actions[np.random.choice(len(actions))] )
 
-            self.assertEqual(101, game.get_total_tile_count())
+            self.longMessage = True
+            self.assertEqual(101, game.get_total_tile_count(),f'Total tiles no longer 101 in round {round}')
 
             # something was moved to the player's mat
-            self.assertGreater(game.players[player].get_total_tile_count(), player_tile_count)
+            self.assertNotEqual(game.players[player].get_total_tile_count(), player_tile_count)
 
             player = game.current_player_idx
             player_tile_count = game.players[player].get_total_tile_count()
@@ -46,6 +48,7 @@ class Test_test_game(unittest.TestCase):
 
             self.assertNotEqual(nbr_actions, len(actions))
             nbr_actions = len(actions)
+            round += 1
 
 if __name__ == '__main__':
     unittest.main()
