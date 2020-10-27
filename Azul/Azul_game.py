@@ -51,7 +51,7 @@ class Azul_game():
             mat_rows.append(cls.penalty_stack_row_idx)
             for pile_idx, t_cnt in factory.get_piles_with_tile_type(tile_type):
                 for row_idx in mat_rows:
-                    avail_actions.append((tile_type, pile_idx, row_idx))
+                    avail_actions.append((tile_type, pile_idx, row_idx, t_cnt))
 
         return avail_actions; 
 
@@ -74,7 +74,7 @@ class Azul_game():
         Make the move `action` for the current player.
         `action` must be a tuple `(tile_type, from_pile, to_stack)`.
         """
-        tile_type, from_pile, to_stack = action
+        tile_type, from_pile, to_stack, nbr_to_move = action
 
         # Check for errors
         if self.winner is not None:
