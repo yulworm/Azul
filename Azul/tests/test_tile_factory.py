@@ -224,39 +224,39 @@ class test_tile_factory(unittest.TestCase):
         remove_ret = factory.remove_tiles_from_pile(1,3)
         self.assertEqual(3, factory.get_total_tile_count())
     
-    def test_get_count_for_pile_and_tile_type(self):
-        factory = tile_factory(self.nbr_piles,self.tile_type_order)
-        raise Exception()
+    #def test_get_count_for_pile_and_tile_type(self):
+    #    factory = tile_factory(self.nbr_piles,self.tile_type_order)
+    #    raise Exception()
 
     
-    def test_get_count_for_pile(self):
-        factory = tile_factory(self.nbr_piles,self.tile_type_order)
-        raise Exception()
+    #def test_get_count_for_pile(self):
+    #    factory = tile_factory(self.nbr_piles,self.tile_type_order)
+    #    raise Exception()
 
     
-    def test_get_tile_count_in_centre_pile(self):
-        factory = tile_factory(self.nbr_piles,self.tile_type_order)
-        raise Exception()
+    #def test_get_tile_count_in_centre_pile(self):
+    #    factory = tile_factory(self.nbr_piles,self.tile_type_order)
+    #    raise Exception()
 
     
-    def test_get_tile_count_in_piles(self):
-        factory = tile_factory(self.nbr_piles,self.tile_type_order)
-        raise Exception()
+    #def test_get_tile_count_in_piles(self):
+    #    factory = tile_factory(self.nbr_piles,self.tile_type_order)
+    #    raise Exception()
 
     
-    def test_get_tile_count_in_bag(self):
-        factory = tile_factory(self.nbr_piles,self.tile_type_order)
-        raise Exception()
+    #def test_get_tile_count_in_bag(self):
+    #    factory = tile_factory(self.nbr_piles,self.tile_type_order)
+    #    raise Exception()
 
     
-    def test_get_tile_count_in_discard(self):
-        factory = tile_factory(self.nbr_piles,self.tile_type_order)
-        raise Exception()
+    #def test_get_tile_count_in_discard(self):
+    #    factory = tile_factory(self.nbr_piles,self.tile_type_order)
+    #    raise Exception()
 
     
-    def test_add_tiles_to_discard(self):
-        factory = tile_factory(self.nbr_piles,self.tile_type_order)
-        raise Exception()
+    #def test_add_tiles_to_discard(self):
+    #    factory = tile_factory(self.nbr_piles,self.tile_type_order)
+    #    raise Exception()
 
 
 
