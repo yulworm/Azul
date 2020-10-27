@@ -169,8 +169,37 @@ class Test_test_player_mat(unittest.TestCase):
 #   def test_get_total_tile_count(self):
 #       self.fail('Not implemented')
 
-#   def test_get_total_score(self):
-#       self.fail('Not implemented')
+    def test_get_total_score(self):
+        self.longMessage = True
+        mat = player_mat()
+        mat.set_wall_for_testing([[1,0,0,0,0],
+                                  [1,0,0,0,0],
+                                  [1,0,0,0,0],
+                                  [1,0,0,0,0],
+                                  [1,0,0,0,0]])
+        self.assertEqual( 7, mat.get_total_score(), 'single column' )
+
+        mat.set_wall_for_testing([[0,0,0,0,0],
+                                  [1,1,1,1,1],
+                                  [0,0,0,0,0],
+                                  [0,0,0,0,0],
+                                  [0,0,0,0,0]])
+        self.assertEqual( 2, mat.get_total_score(), 'single row' )
+
+        mat.set_wall_for_testing([[0,1,0,0,0],
+                                  [0,0,1,0,0],
+                                  [0,0,0,1,0],
+                                  [0,0,0,0,1],
+                                  [1,0,0,0,0]])
+        self.assertEqual( 10, mat.get_total_score(), 'one type' )
+
+        mat.set_wall_for_testing([[1,1,1,1,1],
+                                  [0,1,1,1,0],
+                                  [0,1,1,0,1],
+                                  [1,1,1,1,1],
+                                  [0,1,1,0,0]])
+        self.assertEqual( 2*2 + 2*7 + 1*10, mat.get_total_score(), 'mix' )
+
 
     def test_get_score_for_wall_tile_empty_wall(self):
         mat = player_mat()

@@ -26,7 +26,7 @@ class player_mat(object):
                 continue
 
             # the wall already contains that tile type
-            if self.wall[row][(tile_type - row)%5] == 1:
+            if self.get_wall_for_row_and_type(row, tile_type) != 0:
                 continue
 
             # there is room in the stack
@@ -203,8 +203,10 @@ class player_mat(object):
                 total_score += 2
 
         # complete tile types
-        total_score += 0 # TODO:
-        
+        for tt in range(1,5):
+            if sum([self.get_wall_for_row_and_type(row, tt) for row in range(0,5)]) == 5:
+                total_score += 10
+
         return total_score
 
     def has_a_completed_row(self):
