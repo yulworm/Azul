@@ -1,3 +1,4 @@
+import copy
 import sys
 import numpy as np
 import random
@@ -191,7 +192,7 @@ def progress(count, total, status=''):
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
     sys.stdout.flush()
 
-def train(n, ai=None):
+def train_from_self(n, ai=None):
     """
     Train an AI by playing `n` games against itself.
     """
@@ -252,4 +253,20 @@ def train(n, ai=None):
     print("Done training")
 
     # Return the trained AI
+    return q_ai
+
+def train_from_games(games, ai=None):
+    q_ai = ai
+    if q_ai is None:
+        q_ai = ai_q()
+
+    for game_sequence in games:
+        for f_game, g_action, t_game in reversed(game_sequence):
+            player = f_game.current_player_idx
+            f_state = get_state_for_game(f_game, player)
+            q_action = convert_game_action_to_q_action(g_action)
+            t_state = get_state_for_game(t_game, player)
+
+            q_ai.update(f_state, q_action, t_state, 0)
+
     return q_ai
