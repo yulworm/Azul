@@ -22,11 +22,20 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ai_q.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ai_random.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Azul_game.py" />
     <Compile Include="player_mat.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="scratch.py">
+    <Compile Include="play_dueling_ai.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="launcher.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="tests\test_game.py">

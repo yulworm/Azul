@@ -120,6 +120,8 @@ class tile_factory(object):
 
         self.piles[0][self.tile_type_order.index('P')] = 1
 
+    def is_penalty_tile_in_centre(self):
+        return self.piles[0][self.tile_type_order.index('P')] == 1
 
     def get_total_tile_count(self):
         """

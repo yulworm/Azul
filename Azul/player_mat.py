@@ -1,3 +1,4 @@
+import copy
 class player_mat(object):
     """description of class"""
 
@@ -98,6 +99,24 @@ class player_mat(object):
         """
         self.wall[row][(tile_type+row)%5] = value
         return (tile_type+row)%5
+
+    def get_merged_wall_and_floor(self):
+        """
+        The method takes the information in the floor and merges it into the wall. A partially full floor stack becomes a fractional value in the wall
+        Returns a wall list
+        """
+        ret_wall = copy.deepcopy( self.wall )
+        # loop through rows
+        for row in range(0,5):
+            # check if anything is in the floor stack
+            if sum(self.floor[row]) > 0:
+                # for the tile type that is in the stack
+                for tt in range(0,5):
+                    if self.floor[row][tt] > 0:
+                        # mark wall tile
+                        ret_wall[row][(tt+row)%5] = self.floor[row][tt] / (row +1)
+
+        return ret_wall
 
     def add_tiles_to_penalty(self, nbr_tiles, tile_type):
         self.penalty_stack[tile_type] += nbr_tiles

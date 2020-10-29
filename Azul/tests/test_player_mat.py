@@ -37,6 +37,27 @@ class Test_test_player_mat(unittest.TestCase):
             for tt in range(0,5):
                 self.assertEqual(tt+1,mat.get_wall_for_row_and_type(row,tt),f'Row={row} Type={tt}')
 
+    # 0 1 2 3 4
+    # 4 0 1 2 3
+    # 3 4 0 1 2
+    # 2 3 4 0 1
+    # 1 2 3 4 0 
+    def test_get_merged_wall_and_floor(self):
+        mat = player_mat()
+
+        self.assertEqual(mat.get_merged_wall_and_floor(), [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]])
+
+        mat.move_tiles_to_row(1,1,0)
+        mat.move_tiles_to_row(3,2,4)
+
+        self.assertEqual(mat.get_merged_wall_and_floor(), [[0,1.0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0.6,0,0,0]])
+        self.assertEqual(mat.wall, [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]], 'wall was impacted')
+
+        mat.set_wall_for_testing([[0,0,0,1,0],[0,1,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,1]])
+
+        self.assertEqual(mat.get_merged_wall_and_floor(), [[0,1.0,0,1,0],[0,1,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0.6,0,0,1]])
+        self.assertEqual(mat.wall, [[0,0,0,1,0],[0,1,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,1]], 'wall was impacted')
+
     def test_move_tiles_to_row_fill_from_zero(self):
         mat = player_mat()
         mat.move_tiles_to_row(4,1,3)

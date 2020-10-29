@@ -8,7 +8,7 @@ class Test_test_game(unittest.TestCase):
 
         player = game.current_player_idx
         
-        actions = game.available_actions(game.factory, game.players[player])
+        actions = game.available_actions(game)
 
         # make a random move
         game.move( actions[np.random.choice(len(actions))] )
@@ -27,7 +27,7 @@ class Test_test_game(unittest.TestCase):
         player = game.current_player_idx
         player_tile_count = 0
 
-        actions = game.available_actions(game.factory, game.players[player])
+        actions = game.available_actions(game)
         prev_actions = actions
 
         round = 1
@@ -44,7 +44,7 @@ class Test_test_game(unittest.TestCase):
             player = game.current_player_idx
             player_tile_count = game.players[player].get_total_tile_count()
 
-            actions = game.available_actions(game.factory, game.players[player])
+            actions = game.available_actions(game)
 
             self.assertNotEqual(actions, prev_actions, f'In round {round} the number of actions did not change')
             prev_actions = actions
