@@ -10,27 +10,20 @@ import os
 import datetime
 
 def main():
-    print(len(read_training_matches('data')))
-    #train_q_ai_with_random()
-    #play_randoms()
-    #ais = [ai_random(), ai_random()]
+    #generate_random_matches(100)
+    train_ai(ai_q.ai_q(), games_folder='data', nbr_new_games=200)
 
-    #results = save_training_matches(ais,f'test_{datetime.datetime.now().strftime("%Y%m%d_%H%M")}',2,20,'data')
-    #for r in results:
-    #    print(r)
+def train_ai(ai, nbr_new_games=0, games_folder=None, interesting_cut_off=50):
 
-def train_q_ai_with_random():
-    ai = ai_q.train_from_games(ai_q.generate_training_games(2))
+    if games_folder is not None:
+        ai.train_from_games( read_training_matches(games_folder) )
 
-    #for item in ai.q.items():
-    #    print(item)
+    if nbr_new_games > 0:
+        ai = generate_save_training_matches_and_train_model(ai,f'{ai.get_name()}',nbr_new_games,interesting_cut_off,games_folder)
 
-    #ai.debug = True
-    ais = [ai, ai_random()]
+    results = dueling_ai([ai, ai_random()],f'{ai.get_name()}_v_random',1000)
 
-    results = dueling_ai(ais,'test1',100)
-    for r in results:
-        print(r)
+    return ai
 
 def play_randoms():
     ais = [ai_random(), ai_random()]
@@ -42,6 +35,7 @@ def play_randoms():
 def dueling_ai(ais, duel_name, nbr_matches):
 
     results = list()
+    player_0_wins = 0
     for i in range(0,nbr_matches):
 
         game = Azul_game.Azul_game()
@@ -54,11 +48,31 @@ def dueling_ai(ais, duel_name, nbr_matches):
     
         results.append((duel_name, i, ais[0].get_name(), game.players[0].get_total_score(), ais[1].get_name(), game.players[1].get_total_score(), nbr_turns))
 
+        if game.players[0].get_total_score() > game.players[1].get_total_score():
+            player_0_wins += 1
+
         progress(i, nbr_matches)
     sys.stdout.write('\n')
+
+    print(f'Player 0 won {100 * player_0_wins / nbr_matches}% of matches')
+
     return results
 
-def save_training_matches(ais, save_name, nbr_interesting_saves, interesting_score, folder_location):
+def generate_save_training_matches_and_train_model(ai, save_name, nbr_interesting_saves, interesting_score, folder_location):
+    saves_per_file = 100
+    saves_remaining = nbr_interesting_saves
+    while saves_remaining > 0:
+        ai.train_from_games( generate_and_save_training_matches([ai, ai],save_name, min(saves_per_file, saves_remaing), interesting_score, folder_location) )
+        saves_remaining -= min(saves_per_file, saves_remaing)
+    return ai
+
+def generate_random_matches(nbr):
+    ais = [ai_random(), ai_random()]
+    for i in range(0,nbr//100):
+        print(f'Generation loop {i}')
+        generate_and_save_training_matches(ais,f'random',100,50,'data')
+
+def generate_and_save_training_matches(ais, save_name, nbr_interesting_saves, interesting_score, folder_location):
 
     saved_games = list()
     results = list()
@@ -91,12 +105,12 @@ def save_training_matches(ais, save_name, nbr_interesting_saves, interesting_sco
 
     sys.stdout.write('\n')
 
-    with open(os.path.join(folder_location,f'{save_name}_{nbr_interesting_saves}_matches_min_{interesting_score}.pd'), 'wb') as match_file:
+    with open(os.path.join(folder_location,f'{save_name}_{datetime.datetime.now().strftime("%Y%m%d_%H%M")}_{nbr_interesting_saves}_matches_min_{interesting_score}.azgd'), 'wb') as match_file:
         
       pickle.dump(saved_games, match_file)
       print(os.path.abspath(match_file.name))
 
-    return results
+    return saved_games
 
 def read_training_matches(folder_location, approx_max_nbr_games=-1):
     games = list()

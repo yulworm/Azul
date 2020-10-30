@@ -6,6 +6,7 @@ from Azul_game import Azul_game
 from tile_factory import tile_factory
 from player_mat import player_mat
 import ai_random
+import tools_ai
 
 class ai_q(object):
     """description of class"""
@@ -25,6 +26,8 @@ class ai_q(object):
         self.epsilon = epsilon
         self.use_epsilon = use_epsilon
         self.ai_random = ai_random.ai_random()
+        self.total_requests = 0
+        self.request_used_q = 0
 
     def update(self, old_state, action, new_state, reward):
         """
@@ -73,20 +76,12 @@ class ai_q(object):
             return b_q
 
     def best_action_with_value(self, state):
-        # get all the possible actions given the state
-        # at most there can be 15 tiles of a type that can be moved
-        actions = list()
-        for tt in range(0,5):
-            for i in range(1,6): # theoretically this can go up to 15, but that is too much variability for us to handle
-                for row in range(0,6):
-                    actions.append((tt,i,row))
-
-        return self.best_action_with_value_given_limited_actions(state, actions)
+        return self.best_action_with_value_given_limited_actions(state, tools_ai.get_3D_action_list())
 
     def best_action_with_value_given_limited_actions(self, state, actions):
         """
         returns a tuple (action, value), where action is a tuple and value is the expected reward for taking that action
-        if there are no calculated values for any of the possible actions, then the first action is returned with a value of 0
+        if there are no calculated values for any of the possible actions, then (None, None) is returned
         """
         b_q = -2
         b_a = None
@@ -129,18 +124,24 @@ class ai_q(object):
         # the state is the current player's wall and floor
         q_state = get_state_for_game(game, game.current_player_idx)
         g_actions = game.available_actions(game)
-        q_actions = get_get_q_actions_from_game_actions(g_actions)
+        q_actions = tools_ai.convert_game_actions_to_3D_actions(g_actions)
 
         q_action = self.choose_q_action(q_state, q_actions)
 
+        self.total_requests += 1
+        self.request_used_q += 1
+
         # if the q algo has no real insight, just pick using the semi random method
         if q_action is None:
+            self.request_used_q += -1
             return self.ai_random.choose_action(game)
 
         from_piles = set()
-        for tile_type, from_pile, to_stack, nbr_to_move in g_actions:
-            if q_action[0] == tile_type and q_action[1] == nbr_to_move and q_action[2] == to_stack:
-                from_piles.add(from_pile)
+        for ga in tools_ai.get_filter_actions_containing_3D_action(q_action, g_actions):
+            from_piles.add(ga[1])
+
+        if len(from_piles) == 0:
+            raise Exception(f'From could not be found for {q_action} in {g_actions}')
 
         # if the centre pile still has the penalty tile, then avoid the centre pile if possible
         #if game.factory.is_penalty_tile_in_centre() and len(from_piles) > 1:
@@ -150,7 +151,24 @@ class ai_q(object):
         return (q_action[0], np.random.choice(list(from_piles)), q_action[2], q_action[1])
 
     def get_name(self):
-        return "q_ai_1"
+        return f"q_ai_{self.get_size_of_q_space()}"
+
+    def get_q_rate(self):
+        return (self.total_requests, self.request_used_q)
+
+    def get_size_of_q_space(self):
+        return len([qv for qv in self.q.values() if qv != 0])
+
+    def train_from_games(self, games):
+        for game_sequence in games:
+            for f_game, g_action, t_game in reversed(game_sequence):
+                player = f_game.current_player_idx
+                f_state = get_state_for_game(f_game, player)
+                q_action = tools_ai.convert_game_action_to_3D_action(g_action)
+                t_state = get_state_for_game(t_game, player)
+                score = t_game.players[player].get_total_score()/100
+
+                self.update(f_state, q_action, t_state, score)
 
 def get_state_for_game(game, player):
     """
@@ -165,32 +183,7 @@ def get_state_for_game(game, player):
 
     return tuple(row_tuples)
 
-def get_get_q_actions_from_game_actions(g_actions):
-    """
-    The q action is a simplified version of the game actions, only containing the tile type and the number of tiles to move
-    Action is a tuple tile_type,nbr_to_move
-    """
-    q_actions = set()
-    for ga in g_actions:
-        q_actions.add( convert_game_action_to_q_action(ga) )
 
-    return list(q_actions)
-
-def convert_game_action_to_q_action(g_action):
-    return (g_action[0],g_action[3],g_action[2])
-
-def progress(count, total, status=''):
-    """
-    From https://gist.github.com/vladignatyev/06860ec2040cb497f0f3
-    """
-    bar_len = 60
-    filled_len = int(round(bar_len * count / float(total)))
-
-    percents = round(100.0 * count / float(total), 1)
-    bar = '=' * filled_len + '-' * (bar_len - filled_len)
-
-    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
-    sys.stdout.flush()
 
 def train_from_self(n, ai=None):
     """
@@ -206,7 +199,7 @@ def train_from_self(n, ai=None):
     for i in range(n):
         if i % 500 == 0:
             print(f"Played {i} training games")
-        progress(i%500, 500)
+        tools_ai.progress(i%500, 500)
         game = Azul_game()
 
         # keep track of all the moved
@@ -223,7 +216,7 @@ def train_from_self(n, ai=None):
 
             # choose an action
             g_action = player_ai.choose_action(game)
-            q_action = convert_game_action_to_q_action( g_action )
+            q_action = tools_ai.convert_game_action_to_3D_action( g_action )
 
             # Make move
             game.move(g_action)
@@ -255,18 +248,4 @@ def train_from_self(n, ai=None):
     # Return the trained AI
     return q_ai
 
-def train_from_games(games, ai=None):
-    q_ai = ai
-    if q_ai is None:
-        q_ai = ai_q()
 
-    for game_sequence in games:
-        for f_game, g_action, t_game in reversed(game_sequence):
-            player = f_game.current_player_idx
-            f_state = get_state_for_game(f_game, player)
-            q_action = convert_game_action_to_q_action(g_action)
-            t_state = get_state_for_game(t_game, player)
-
-            q_ai.update(f_state, q_action, t_state, 0)
-
-    return q_ai

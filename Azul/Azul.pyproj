@@ -22,6 +22,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ai_convolutional_wall.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="ai_q.py">
       <SubType>Code</SubType>
     </Compile>
@@ -47,9 +50,13 @@
     <Compile Include="tests\test_player_mat.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="tests\test_tools_ai.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="tile_factory.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="tools_ai.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\" />
