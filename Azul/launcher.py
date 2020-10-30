@@ -62,8 +62,8 @@ def generate_save_training_matches_and_train_model(ai, save_name, nbr_interestin
     saves_per_file = 100
     saves_remaining = nbr_interesting_saves
     while saves_remaining > 0:
-        ai.train_from_games( generate_and_save_training_matches([ai, ai],save_name, min(saves_per_file, saves_remaing), interesting_score, folder_location) )
-        saves_remaining -= min(saves_per_file, saves_remaing)
+        ai.train_from_games( generate_and_save_training_matches([ai, ai],save_name, min(saves_per_file, saves_remaining), interesting_score, folder_location) )
+        saves_remaining -= min(saves_per_file, saves_remaining)
     return ai
 
 def generate_random_matches(nbr):
