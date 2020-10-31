@@ -3,8 +3,8 @@ import sys
 import numpy as np
 import random
 from Azul_game import Azul_game
-from tile_factory import tile_factory
-from player_mat import player_mat
+#from tile_factory import tile_factory
+#from player_mat import player_mat
 import ai_random
 import tools_ai
 
@@ -76,7 +76,7 @@ class ai_q(object):
             return b_q
 
     def best_action_with_value(self, state):
-        return self.best_action_with_value_given_limited_actions(state, tools_ai.get_3D_action_list())
+        return self.best_action_with_value_given_limited_actions(state, tools_ai.get_complete_3D_action_list())
 
     def best_action_with_value_given_limited_actions(self, state, actions):
         """
@@ -136,19 +136,7 @@ class ai_q(object):
             self.request_used_q += -1
             return self.ai_random.choose_action(game)
 
-        from_piles = set()
-        for ga in tools_ai.get_filter_actions_containing_3D_action(q_action, g_actions):
-            from_piles.add(ga[1])
-
-        if len(from_piles) == 0:
-            raise Exception(f'From could not be found for {q_action} in {g_actions}')
-
-        # if the centre pile still has the penalty tile, then avoid the centre pile if possible
-        #if game.factory.is_penalty_tile_in_centre() and len(from_piles) > 1:
-        #    from_piles.remove(0)
-
-        # tile_type, from_pile, to_stack, nbr_to_move
-        return (q_action[0], np.random.choice(list(from_piles)), q_action[2], q_action[1])
+        return tools_ai.convert_3D_action_to_game_action_random(q_action, g_actions)
 
     def get_name(self):
         return f"q_ai_{self.get_size_of_q_space()}"

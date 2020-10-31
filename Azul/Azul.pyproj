@@ -22,7 +22,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ai_convolutional_wall.py">
+    <Compile Include="ai_nn.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ai_q.py">

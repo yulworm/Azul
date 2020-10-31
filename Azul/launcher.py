@@ -8,10 +8,16 @@ import sys
 import copy
 import os
 import datetime
+import ai_nn
 
 def main():
     #generate_random_matches(100)
-    train_ai(ai_q.ai_q(), games_folder='data', nbr_new_games=200)
+    #ai = train_ai(ai_q.ai_q(), games_folder='data', nbr_new_games=200)
+    ai = train_ai(ai_nn.ai(), games_folder='training', nbr_new_games=0)
+
+    results = dueling_ai([ai, ai_random()],f'{ai.get_name()}_v_random',1000)
+    #for r in results:
+    #    print(r)
 
 def train_ai(ai, nbr_new_games=0, games_folder=None, interesting_cut_off=50):
 
@@ -20,8 +26,6 @@ def train_ai(ai, nbr_new_games=0, games_folder=None, interesting_cut_off=50):
 
     if nbr_new_games > 0:
         ai = generate_save_training_matches_and_train_model(ai,f'{ai.get_name()}',nbr_new_games,interesting_cut_off,games_folder)
-
-    results = dueling_ai([ai, ai_random()],f'{ai.get_name()}_v_random',1000)
 
     return ai
 

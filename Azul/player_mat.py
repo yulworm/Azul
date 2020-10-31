@@ -103,6 +103,7 @@ class player_mat(object):
     def get_merged_wall_and_floor(self):
         """
         The method takes the information in the floor and merges it into the wall. A partially full floor stack becomes a fractional value in the wall
+        If a tile type cannot be added to the row, then there should be -1
         Returns a wall list
         """
         ret_wall = copy.deepcopy( self.wall )
@@ -115,6 +116,9 @@ class player_mat(object):
                     if self.floor[row][tt] > 0:
                         # mark wall tile
                         ret_wall[row][(tt+row)%5] = self.floor[row][tt] / (row +1)
+                    # mark tile types that have not been started as off limits
+                    elif ret_wall[row][(tt+row)%5] == 0:
+                        ret_wall[row][(tt+row)%5] = -1
 
         return ret_wall
 

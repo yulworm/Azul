@@ -50,12 +50,12 @@ class Test_test_player_mat(unittest.TestCase):
         mat.move_tiles_to_row(1,1,0)
         mat.move_tiles_to_row(3,2,4)
 
-        self.assertEqual(mat.get_merged_wall_and_floor(), [[0,1.0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0.6,0,0,0]])
+        self.assertEqual(mat.get_merged_wall_and_floor(), [[-1,1.0,-1,-1,-1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[-1,0.6,-1,-1,-1]])
         self.assertEqual(mat.wall, [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]], 'wall was impacted')
 
         mat.set_wall_for_testing([[0,0,0,1,0],[0,1,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,1]])
 
-        self.assertEqual(mat.get_merged_wall_and_floor(), [[0,1.0,0,1,0],[0,1,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0.6,0,0,1]])
+        self.assertEqual(mat.get_merged_wall_and_floor(), [[-1,1.0,-1,1,-1],[0,1,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[-1,0.6,-1,-1,1]])
         self.assertEqual(mat.wall, [[0,0,0,1,0],[0,1,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,1]], 'wall was impacted')
 
     def test_move_tiles_to_row_fill_from_zero(self):

@@ -1,6 +1,10 @@
 import sys
+import numpy as np
 
-def get_3D_action_list():
+def get_complete_3D_action_list():
+    """
+    generates the list of all 3D actions
+    """
     # Action is a tuple tile_type,nbr_to_move, row_to_move_to
     # 5 * 5 * 6 = 150 possibilities
     actions = list()
@@ -9,6 +13,16 @@ def get_3D_action_list():
             for row in range(0,6):
                 actions.append((tt,i,row))
     return actions
+
+def convert_3D_action_to_game_action_random(a_3D,possible_game_actions):
+    from_piles = set()
+    for ga in get_filter_actions_containing_3D_action(a_3D, possible_game_actions):
+        from_piles.add(ga[1])
+
+    if len(from_piles) == 0:
+        raise Exception(f'From could not be found for {a_3D} in {possible_game_actions}')
+
+    return (a_3D[0], np.random.choice(list(from_piles)), a_3D[2], a_3D[1])
 
 def convert_game_action_to_3D_action(ga):
     """
@@ -33,7 +47,7 @@ def convert_game_actions_to_3D_actions(game_actions):
     return actions
 
 def get_3D_action_idxs_for_game_actions(game_actions):
-    nas = get_3D_action_list()
+    nas = get_complete_3D_action_list()
     indexes = list()
     for a in convert_game_actions_to_3D_actions(game_actions):
         indexes.append( nas.index(a) )
