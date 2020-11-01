@@ -11,13 +11,15 @@ import datetime
 import ai_nn
 
 def main():
-    #generate_random_matches(100)
+    #generate_random_matches(200,70)
     #ai = train_ai(ai_q.ai_q(), games_folder='data', nbr_new_games=200)
-    ai = train_ai(ai_nn.ai(), games_folder='data', nbr_new_games=0)
+    #ai = train_ai(ai_nn.ai('F5x5'), games_folder='data', nbr_new_games=0)
 
-    results = dueling_ai([ai, ai],f'{ai.get_name()}_v_random',100)
+    results = dueling_ai([ai_random(), ai_random()],nbr_matches=100)
     for r in results:
         print(r)
+
+    save_results(results)
 
 def train_ai(ai, nbr_new_games=0, games_folder=None, interesting_cut_off=50):
 
@@ -29,15 +31,27 @@ def train_ai(ai, nbr_new_games=0, games_folder=None, interesting_cut_off=50):
 
     return ai
 
+def save_results(results):
+    filename = f'{results[0][1]}_VS_{results[0][3]}_{datetime.datetime.now().strftime("%Y%m%d_%H%M")}.csv'
+
+    fields = ['duel_nbr', 'AI_0_name', 'AI_0_score', 'AI_1_name', 'AI_1_score', 'nbr_turns']
+
+    with open(os.path.join('results',filename), 'w', newline='') as f: 
+      
+        # using csv.writer method from CSV package 
+        write = csv.writer(f) 
+      
+        write.writerow(fields) 
+        write.writerows(results) 
+
 def play_randoms():
     ais = [ai_random(), ai_random()]
 
-    results = dueling_ai(ais,'test1',100)
+    results = dueling_ai(ais,100)
     for r in results:
         print(r)
 
-def dueling_ai(ais, duel_name, nbr_matches):
-
+def dueling_ai(ais, nbr_matches=100):
     results = list()
     player_0_wins = 0
     for i in range(0,nbr_matches):
@@ -50,7 +64,7 @@ def dueling_ai(ais, duel_name, nbr_matches):
             game.move( action )
             nbr_turns += 1
     
-        results.append((duel_name, i, ais[0].get_name(), game.players[0].get_total_score(), ais[1].get_name(), game.players[1].get_total_score(), nbr_turns))
+        results.append((i, ais[0].get_name(), game.players[0].get_total_score(), ais[1].get_name(), game.players[1].get_total_score(), nbr_turns))
 
         if game.players[0].get_total_score() > game.players[1].get_total_score():
             player_0_wins += 1
@@ -70,11 +84,13 @@ def generate_save_training_matches_and_train_model(ai, save_name, nbr_interestin
         saves_remaining -= min(saves_per_file, saves_remaining)
     return ai
 
-def generate_random_matches(nbr):
+def generate_random_matches(nbr_interesting_saves,interesting_score=50):
     ais = [ai_random(), ai_random()]
-    for i in range(0,nbr//100):
-        print(f'Generation loop {i}')
-        generate_and_save_training_matches(ais,f'random',100,50,'data')
+    saves_per_file = 100
+    saves_remaining = nbr_interesting_saves
+    while saves_remaining > 0:
+        generate_and_save_training_matches(ais,f'random',min(saves_per_file, saves_remaining),interesting_score,'data')
+        saves_remaining -= min(saves_per_file, saves_remaining)
 
 def generate_and_save_training_matches(ais, save_name, nbr_interesting_saves, interesting_score, folder_location):
 
