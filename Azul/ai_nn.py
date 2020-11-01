@@ -27,27 +27,29 @@ class ai(object):
 
     def choose_action_idx_from_state(self, state_a, possible_g_actions):
         # get the predictions
-        predictions = self.model.predict(np.array([state_a]))
+        # the straight forward method is written in the comment below, but for performance I am trying something else
+        # this might be another suggestion https://machinelearningmastery.com/use-different-batch-sizes-training-predicting-python-keras/
+        # predictions = self.model.predict(np.array([state_a]))
+        predictions = self.model(np.array([state_a]))
 
         # check that our assumption about the classification system used by the model is still true
         if len(predictions[0]) != len(self.classification_actions):
             raise Exception('The model does not have the right number of classifications/actions')
 
+        # of the actions that are possible, which one has the highest probability
         highest_prob = -1
         idx_highest_prob = None
-        for idx in tools_ai.get_3D_action_idxs_for_game_actions(possible_g_actions):
-            #print(f'{idx} - {self.classification_actions[idx]} - {predictions[0][idx]}')
+        for idx in tools_ai.get_3D_action_idxs_for_game_actions(possible_g_actions,self.classification_actions):
             if predictions[0][idx] > highest_prob:
                 highest_prob = predictions[0][idx]
                 idx_highest_prob = idx
-                #print('new highest')
-        #raise Exception()
+
         return idx_highest_prob
 
     def evaluate_model(self, states, a_taken, gas_possible):
         nbr_success = 0
         for i in range(0,len(states)):
-            if a_taken == self.choose_action_idx_from_state(states[i], gas_possible[i]):
+            if a_taken[i] == self.choose_action_idx_from_state(states[i], gas_possible[i]):
                 nbr_success += 1
             tools_ai.progress(i,len(states)-1)
 
@@ -71,7 +73,7 @@ class ai(object):
         y_train = np.array(tf.keras.utils.to_categorical(y_train_l, len(self.classification_actions)))
 
         # Fit model on training data
-        self.model.fit(np.array(x_train_l), y_train, epochs=10)
+        self.model.fit(np.array(x_train_l), y_train, epochs=20)
 
         #print( self.evaluate_model(x_train_l, y_train_l, possible_g_actions) )
 
@@ -90,7 +92,7 @@ class ai(object):
             possible_actions.append( f_game.available_actions(f_game) )
             states.append( self.get_state_for_game(f_game) ) 
 
-        return (states, tools_ai.get_3D_action_idxs_for_game_actions(taken_actions), possible_actions)
+        return (states, tools_ai.get_3D_action_idxs_for_game_actions(taken_actions, self.classification_actions), possible_actions)
     
     def get_state_for_game(self, game, player_idx=None):
         if player_idx is None:
@@ -108,14 +110,18 @@ class ai(object):
         """
         model = tf.keras.models.Sequential()
 
-        model.add( tf.keras.layers.Conv2D(32, (2,2), input_shape=(5,5,1)) )
+        model.add( tf.keras.layers.Conv2D(32, (3,3), input_shape=(5,5,1)) )
 
-        model.add( tf.keras.layers.Conv2D(16, (3,3) ) )
+        model.add( tf.keras.layers.Conv2D(32, (3,3) ) )
 
         model.add( tf.keras.layers.Flatten() )
 
         model.add( tf.keras.layers.BatchNormalization() )
+        
+        model.add( tf.keras.layers.Dense(256,activation="relu") )
     
+        #model.add( tf.keras.layers.Dropout(0.15) )
+
         model.add( tf.keras.layers.Dense(256,activation="relu") )
 
         model.add( tf.keras.layers.Dense(len(self.classification_actions), activation="softmax") )

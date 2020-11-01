@@ -13,11 +13,11 @@ import ai_nn
 def main():
     #generate_random_matches(100)
     #ai = train_ai(ai_q.ai_q(), games_folder='data', nbr_new_games=200)
-    ai = train_ai(ai_nn.ai(), games_folder='training', nbr_new_games=0)
+    ai = train_ai(ai_nn.ai(), games_folder='data', nbr_new_games=0)
 
-    results = dueling_ai([ai, ai_random()],f'{ai.get_name()}_v_random',1000)
-    #for r in results:
-    #    print(r)
+    results = dueling_ai([ai, ai],f'{ai.get_name()}_v_random',100)
+    for r in results:
+        print(r)
 
 def train_ai(ai, nbr_new_games=0, games_folder=None, interesting_cut_off=50):
 

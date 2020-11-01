@@ -46,11 +46,12 @@ def convert_game_actions_to_3D_actions(game_actions):
         actions.append( convert_game_action_to_3D_action(ga) )
     return actions
 
-def get_3D_action_idxs_for_game_actions(game_actions):
-    nas = get_complete_3D_action_list()
+def get_3D_action_idxs_for_game_actions(game_actions,complete_action_list=None):
+    if complete_action_list is None:
+        complete_action_list = get_complete_3D_action_list()
     indexes = list()
     for a in convert_game_actions_to_3D_actions(game_actions):
-        indexes.append( nas.index(a) )
+        indexes.append( complete_action_list.index(a) )
 
     return indexes
 
