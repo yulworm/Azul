@@ -97,12 +97,15 @@ class ai(object):
     def get_state_for_game(self, game, player_idx=None):
         if player_idx is None:
             player_idx = game.current_player_idx
-        if self.variation == 'conv_5x5':
+
+        if self.variation in ['conv_5x5', 'F5x5']:
             return np.array( game.players[player_idx].get_merged_wall_and_floor() )[:,:,np.newaxis]
 
     def get_model(self,variation):
         if variation == 'conv_5x5':
             return self.get_model_conv_5x5()
+        elif self.variation == 'F5x5':
+            return self.get_model_F5x5()
 
     def get_model_conv_5x5(self):
         """
@@ -118,6 +121,29 @@ class ai(object):
 
         model.add( tf.keras.layers.BatchNormalization() )
         
+        model.add( tf.keras.layers.Dense(512,activation="relu") )
+    
+        model.add( tf.keras.layers.Dropout(0.15) )
+
+        model.add( tf.keras.layers.Dense(256,activation="relu") )
+
+        model.add( tf.keras.layers.Dense(len(self.classification_actions), activation="softmax") )
+
+        model.compile(
+            optimizer="adam",
+            loss="categorical_crossentropy",
+            metrics=["accuracy"])
+
+        return model
+
+    def get_model_F_5x5(self):
+        """
+        Returns a compiled convolutional neural network model. 
+        """
+        model = tf.keras.models.Sequential()
+
+        model.add( tf.keras.layers.Flatten(input_shape=(5,5)) )
+
         model.add( tf.keras.layers.Dense(256,activation="relu") )
     
         #model.add( tf.keras.layers.Dropout(0.15) )
