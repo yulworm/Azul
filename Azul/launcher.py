@@ -9,17 +9,27 @@ import copy
 import os
 import datetime
 import ai_nn
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
 
 def main():
-    #generate_random_matches(200,70)
-    #ai = train_ai(ai_q.ai_q(), games_folder='data', nbr_new_games=200)
-    #ai = train_ai(ai_nn.ai('F5x5'), games_folder='data', nbr_new_games=0)
+    ai = train_ai(ai_nn.ai('F5x5',True), games_folder='data', nbr_new_games=500, interesting_cut_off=60)
 
-    results = dueling_ai([ai_random(), ai_random()],nbr_matches=100)
+    results = dueling_ai([ai, ai],nbr_matches=100)
     for r in results:
         print(r)
 
     save_results(results)
+
+def holding():
+
+    filter_training_matches('data', 'x')
+
+    dueling_ai([ai_random(), ai_random(False)],nbr_matches=100)
+    #generate_random_matches(200,70)
+    #ai = train_ai(ai_q.ai_q(), games_folder='data', nbr_new_games=0)
 
 def train_ai(ai, nbr_new_games=0, games_folder=None, interesting_cut_off=50):
 
@@ -43,6 +53,40 @@ def save_results(results):
       
         write.writerow(fields) 
         write.writerows(results) 
+
+    plot_results(results, filename)
+
+def plot_results(results, filename=None):
+    rd = {'AI_0_score':list(), 'AI_1_score':list(), 'nbr_turns':list(), 'max_score':list(), 'min_score':list()}
+    for r in results:
+        rd['AI_0_score'].append(r[2])
+        rd['AI_1_score'].append(r[4])
+        rd['nbr_turns'].append(r[5])
+        rd['max_score'].append(max(r[2],r[4]))
+        rd['min_score'].append(min(r[2],r[4]))
+
+    #df = pd.DataFrame(scores_for_df, columns=[results[0][1], results[0][3]])
+    df = pd.DataFrame(rd)
+
+    # bubble https://seaborn.pydata.org/examples/scatter_bubbles.html
+#    bubble = df.groupby(['nbr_turns','max_score']).agg(np.size)
+
+    #sns.set(rc={'figure.figsize':(2,2)})
+    
+
+    fig, (ax1, ax2) = plt.subplots(1,2, figsize = (12, 5))
+
+    ax1.boxplot(df[['AI_0_score','AI_1_score']], labels=[results[0][1], results[0][3]])
+    ax1.grid()
+
+    ax2.scatter(df.nbr_turns,df.max_score)
+    ax2.grid()
+
+    #plt.show(block=True)
+    if filename is not None:
+        plt.savefig(os.path.join('results',filename.replace('.csv','.png')))
+    else:
+        plt.show()
 
 def play_randoms():
     ais = [ai_random(), ai_random()]
@@ -105,6 +149,7 @@ def generate_and_save_training_matches(ais, save_name, nbr_interesting_saves, in
         # we store the sequence of turn for each player separately, that way I can save them separately if only one of them is interesting
         game_sequence = [list(), list()]
         nbr_turns = 0
+        score_dropped = [False, False]
         while game.winner is None:
             player = game.current_player_idx
             start_state = copy.deepcopy(game)
@@ -113,12 +158,15 @@ def generate_and_save_training_matches(ais, save_name, nbr_interesting_saves, in
 
             game_sequence[player].append( (start_state, action, copy.deepcopy(game)) )
 
+            # we are not interested in games where the player's scrore decreased at any time, that means they did something wrong
+            score_dropped[player] = score_dropped[player] or start_state.players[player].cummulative_score > game.players[player].cummulative_score
+
             nbr_turns += 1
 
         games_played += 1
         for player in range(0,1):
             # if the score of the last moved played by a player is greater than the treashold, then we save it
-            if game_sequence[player][-1][2].players[player].get_total_score() > interesting_score:
+            if game_sequence[player][-1][2].players[player].get_total_score() > interesting_score and not score_dropped[player]:
                 saved_games.append(game_sequence[player])
 
                 results.append((save_name, len(saved_games), game_sequence[player][-1][2].players[player].get_total_score(), len(game_sequence[player])))
@@ -146,6 +194,42 @@ def read_training_matches(folder_location, approx_max_nbr_games=-1):
             games.extend( pickle.load(match_file) )
 
     return games
+
+def filter_training_matches(old_folder,new_folder):
+    tranches = dict()
+    for i in range(5,20):
+        tranches[i] = list()
+
+    nbr_rejected = 0
+    for game_sequence in read_training_matches(old_folder):
+        score_dropped = False
+        used_penatly = False
+        final_score = 0
+        for f_game, g_action, t_game in game_sequence:        
+            player = f_game.current_player_idx
+            score_dropped = f_game.players[player].cummulative_score > t_game.players[player].cummulative_score
+            used_penalty = g_action[2] == Azul_game.penalty_stack_row_idx
+            if score_dropped or used_penalty:
+                break
+            final_score = t_game.players[player].get_total_score()
+        # is there a reason to ignore this game sequence?
+        if score_dropped or used_penalty:
+            nbr_rejected += 1
+            continue
+
+        tranches[final_score//10].append(game_sequence)
+
+    print(f'{nbr_rejected} games rejected')
+
+    for i, games in tranches.items():
+        range_desc = f'{i*10}_{(i+1)*10-1}'
+        if len(games) > 0:
+            with open(os.path.join(new_folder,f'filtered_{datetime.datetime.now().strftime("%Y%m%d_%H%M")}_{len(games)}_matches_{range_desc}.azgd'), 'wb') as match_file:
+              pickle.dump(games, match_file)
+              print(os.path.abspath(match_file.name))
+        else:
+            print(f'Nothing for {range_desc}')
+
 
 def progress(count, total, status=''):
     """
