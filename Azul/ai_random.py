@@ -6,21 +6,33 @@ import Azul_game
 class ai_random(object):
     """description of class"""
 
-    def __init__(self, exclude_penalty=True):
-        self.exclude_penalty_actions = exclude_penalty
+    def __init__(self, use_tactics=True):
+        self.use_tactics = use_tactics
 
     def choose_action(self, game):
-        actions = game.available_actions(game)
-        action = None
-        while action is None:
-            action = actions[np.random.choice(len(actions))]
-            if self.exclude_penalty_actions and action[2]==Azul_game.penalty_stack_row_idx: # if the action is to the discard, then skip it if you can
-                for a in actions:
-                    if a[2]!=Azul_game.penalty_stack_row_idx:
-                        action = None
-                        break
+        g_actions = game.available_actions(game)
 
-        return action
+        if self.use_tactics:
+            # avoid putting a tile in the penalty
+            rows_to_avoid = [Azul_game.penalty_stack_row_idx]
 
+            # avoid filling a row and ending the game
+            wall = game.players[game.current_player_idx].wall
+            for i in range(0,5):
+                if sum(wall[i]) == 4:
+                    rows_to_avoid.append(i)
+
+            for row in rows_to_avoid:
+                f_actions = list()
+                for action in g_actions:
+                    if action[2]!=row:
+                        f_actions.append(action)
+
+                # if there are still any actions left, then we will use the filtered list
+                if len(f_actions) > 0:
+                    g_actions = f_actions
+
+        return g_actions[np.random.choice(len(g_actions))]
+    
     def get_name(self):
-        return "random_ai_1"
+        return f"random_ai_{self.use_tactics}"
