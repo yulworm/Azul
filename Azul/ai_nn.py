@@ -1,20 +1,44 @@
 import tools_ai
 import tensorflow as tf
 import numpy as np
+import Azul_game
 
 class ai(object):
     """description of class"""
 
-    def __init__(self,variation='conv_5x5'):
+    def __init__(self,variation='conv_5x5',use_tactics=False,epochs=40):
 
         self.variation = variation
 
         self.classification_actions = tools_ai.get_complete_3D_action_list()
         self.model = self.get_model(variation)
+        self.use_tactics = use_tactics
+        self.epochs = epochs
 
     def choose_action(self, game):
         # get the probabilities for all the possible actions
         g_actions = game.available_actions(game)
+
+        if self.use_tactics:
+            # avoid putting a tile in the penalty
+            rows_to_avoid = [Azul_game.penalty_stack_row_idx]
+
+            # avoid filling a row and ending the game
+            wall = game.players[game.current_player_idx].wall
+            for i in range(0,5):
+                if sum(wall[i]) == 4:
+                    rows_to_avoid.append(i)
+
+            for row in rows_to_avoid:
+                f_actions = list()
+                for action in g_actions:
+                    if action[2]!=row:
+                        f_actions.append(action)
+
+                # if there are still any actions left, then we will use the filtered list
+                if len(f_actions) > 0:
+                    g_actions = f_actions
+
 
         # get the prediction action index
         a_3D_idx = self.choose_action_idx_from_state(self.get_state_for_game(game), g_actions)
@@ -73,7 +97,7 @@ class ai(object):
         y_train = np.array(tf.keras.utils.to_categorical(y_train_l, len(self.classification_actions)))
 
         # Fit model on training data
-        self.model.fit(np.array(x_train_l), y_train, epochs=20)
+        self.model.fit(np.array(x_train_l), y_train, epochs=self.epochs)
 
         #print( self.evaluate_model(x_train_l, y_train_l, possible_g_actions) )
 
@@ -136,7 +160,7 @@ class ai(object):
 
         return model
 
-    def get_model_F_5x5(self):
+    def get_model_F5x5(self):
         """
         Returns a compiled convolutional neural network model. 
         """
