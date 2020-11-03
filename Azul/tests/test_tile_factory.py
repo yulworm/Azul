@@ -259,6 +259,13 @@ class test_tile_factory(unittest.TestCase):
     #    raise Exception()
 
 
+    def test_get_piles_for_display(self):
+        factory = tile_factory(self.nbr_piles,self.tile_type_order)
+
+        self.assertEqual(factory.get_piles_for_display(), [[5,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None]])
+        
+        factory.set_pile_contents(1,[1,0,1,2,0,0])
+        self.assertEqual(factory.get_piles_for_display(), [[5,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None],[3,3,2,0],[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None]])
 
     def empty_all_piles(self, factory):
         for i in range(1,factory.nbr_piles):
@@ -270,6 +277,7 @@ class test_tile_factory(unittest.TestCase):
         # loop through the tile types removing from the centre pile
         for j in range(0,5):
             factory.remove_tiles_from_pile(0,j)
+
 
 if __name__ == '__main__':
     unittest.main()

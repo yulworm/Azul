@@ -1,6 +1,6 @@
 from ai_random import ai_random
 import ai_q
-import play_dueling_ai
+#import play_dueling_ai
 import Azul_game
 import csv
 import pickle
@@ -15,15 +15,16 @@ import numpy as np
 import seaborn as sns
 
 def main():
-    ai = train_ai(ai_nn.ai('F5x5',True), games_folder='data', nbr_new_games=500, interesting_cut_off=60)
+    filter_training_matches('data', 'x')
+
+def holding():
+    ai = train_ai(ai_nn.ai('F5x5',True), games_folder='data', nbr_new_games=800, interesting_cut_off=60)
 
     results = dueling_ai([ai, ai],nbr_matches=100)
     for r in results:
         print(r)
 
     save_results(results)
-
-def holding():
 
     filter_training_matches('data', 'x')
 

@@ -42,6 +42,9 @@ class player_mat(object):
         return self.floor[row][tile_type]
 
     def move_tiles_to_row(self, nbr_tiles, tile_type, row):
+        """
+        nbr_tiles, tile_type, row
+        """
         # check that this is a permitted move for the type
         assert row in self.get_rows_permitted_for_tile_type(tile_type)
 
@@ -238,6 +241,44 @@ class player_mat(object):
                 return True
 
         return False
+
+    def get_floor_for_display(self):
+        disp_floor = list()
+        for row in range(5):
+            tl = list()
+            for tt in range(5):
+                for i in range(self.floor[row][tt]):
+                    tl.append(tt)
+
+            # fill in the blanks
+            for i in range(len(tl), row+1):
+                tl.append(None)
+            disp_floor.append(tl)
+
+        return disp_floor
+
+    def get_wall_layout(self):
+        return [[0,1,2,3,4],[4,0,1,2,3],[3,4,0,1,2],[2,3,4,0,1],[1,2,3,4,0]]
+
+    def get_wall_for_display(self):
+        disp = list()
+        for row in range(5):
+            disp_row = list()
+            for col in range(5):
+                if self.wall[row][col] == 0:
+                    disp_row.append(None)
+                else:
+                    disp_row.append(self.get_wall_layout()[row][col])
+            disp.append(disp_row)
+
+        return disp
+
+    def get_penalty_stack_for_display(self):
+        disp = list()
+        for tt in range(6):
+            for i in range(self.penalty_stack[tt]):
+                tl.append(tt)
+        return disp
 
     def __str__(self):
         return_str = f'Score={self.get_total_score()}\n'

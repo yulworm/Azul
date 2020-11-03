@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>686fe68a-10b5-4483-ad0d-947ef38f51c4</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Azul_game.py</StartupFile>
+    <StartupFile>launcher.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -32,6 +32,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Azul_game.py" />
+    <Compile Include="play.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="player_mat.py">
       <SubType>Code</SubType>
     </Compile>

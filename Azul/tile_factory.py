@@ -172,6 +172,28 @@ class tile_factory(object):
             for i in range(0, type_counts[type]):
                 self.discard.append(type) 
 
+    def get_piles_for_display(self):
+        disp_piles = list()
+
+        nbr_slots = 0
+        for p in range(6):
+            if p == 0:
+                nbr_slots = 16
+            else:
+                nbr_slots = 4
+
+            tl = list()
+            for tt in reversed(range(6)):
+                for i in range(self.piles[p][tt]):
+                    tl.append(tt)
+
+            # fill in the blanks
+            for i in range(len(tl), nbr_slots):
+                tl.append(None)
+
+            disp_piles.append(tl)
+
+        return disp_piles
 
     def __str__(self):
 

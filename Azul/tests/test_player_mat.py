@@ -275,5 +275,35 @@ class Test_test_player_mat(unittest.TestCase):
         mat.set_wall_for_row_and_type(3,0,1) # no connection
         self.assertEqual(7,mat.get_score_for_wall_tile(4,0))
 
+    def test_get_floor_for_display(self):
+        mat = player_mat()
+
+        mat.move_tiles_to_row(1,0,0)
+
+        self.assertEqual(mat.get_floor_for_display(),[[0],[None,None],[None,None,None],[None,None,None,None],[None,None,None,None,None]])
+
+        mat.move_tiles_to_row(3,4,4)
+
+        self.assertEqual(mat.get_floor_for_display(),[[0],[None,None],[None,None,None],[None,None,None,None],[4,4,4,None,None]])
+
+    def test_get_wall_for_display(self):
+        mat = player_mat()
+        self.assertEqual(mat.get_wall_for_display(),[[None,None,None,None,None],[None,None,None,None,None],[None,None,None,None,None],[None,None,None,None,None],[None,None,None,None,None]])
+
+        mat.set_wall_for_testing([[1,1,1,1,1],
+                                  [1,1,1,1,1],
+                                  [1,1,1,1,1],
+                                  [1,1,1,1,1],
+                                  [1,1,1,1,1]])
+
+        self.assertEqual(mat.get_wall_for_display(),mat.get_wall_layout())
+
+        mat.set_wall_for_testing([[1,1,1,1,0],
+                                  [1,1,1,1,1],
+                                  [1,1,0,1,1],
+                                  [1,1,1,1,1],
+                                  [1,1,1,1,1]])
+
+        self.assertEqual(mat.get_wall_for_display(),[[0,1,2,3,None],[4,0,1,2,3],[3,4,None,1,2],[2,3,4,0,1],[1,2,3,4,0]])
 if __name__ == '__main__':
     unittest.main()
