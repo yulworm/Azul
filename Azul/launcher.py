@@ -15,12 +15,16 @@ import numpy as np
 import seaborn as sns
 
 def main():
-    filter_training_matches('data', 'x')
+    ai = train_ai(ai_nn.ai('F5x5',True), games_folder='data', nbr_new_games=800, interesting_cut_off=60)
+    
+    fn = save_model(ai)
+
+    save_results( dueling_ai([read_model(fn), ai],nbr_matches=100) )
 
 def holding():
-    ai = train_ai(ai_nn.ai('F5x5',True), games_folder='data', nbr_new_games=800, interesting_cut_off=60)
+    ai = train_ai(ai_nn.ai('F5x5',True), games_folder='data', nbr_new_games=0, interesting_cut_off=60)
 
-    results = dueling_ai([ai, ai],nbr_matches=100)
+    results = dueling_ai([ai, ai],nbr_matches=500)
     for r in results:
         print(r)
 
@@ -31,6 +35,19 @@ def holding():
     dueling_ai([ai_random(), ai_random(False)],nbr_matches=100)
     #generate_random_matches(200,70)
     #ai = train_ai(ai_q.ai_q(), games_folder='data', nbr_new_games=0)
+
+def save_model(ai):
+    filename = f'{ai.get_name()}_{datetime.datetime.now().strftime("%Y%m%d_%H%M")}.azm'
+    with open(os.path.join('models',filename), 'wb') as model_file:
+        
+      pickle.dump(ai, model_file)
+      print(os.path.abspath(model_file.name))
+
+    return filename
+
+def read_model(model_name):
+    with open( os.path.join('models',model_name), 'rb' ) as model_file:
+        return pickle.load(model_file)
 
 def train_ai(ai, nbr_new_games=0, games_folder=None, interesting_cut_off=50):
 
