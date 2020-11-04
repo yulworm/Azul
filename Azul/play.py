@@ -13,6 +13,9 @@ tile_images = list()
 tile_backgrounds = [(192,220,232),(243,185,85),(244,150,155),(28,29,32),(255,255,255)]     #['A', 'Y', 'R', 'B', 'W', 'P']
 from_tiles = list() # data = (rect, tile type, pile index)
 to_row = list()
+TILE_NAMES = ['Azul', 'Yellow', 'Red', 'Black', 'White', '1st player']
+PILE_NAMES = ['Centre', '12', '3', '5', '7', '9']
+ROW_NAMES = ['1', '2', '3', '4', '5', 'Penalty']
 
 def play(ai):
     game = Azul_game.Azul_game()
@@ -200,11 +203,26 @@ def main():
 
     from_selected = (None,None,None) # rect, type, from
     to_selected = (None, None) # rect, to row
+    selected_action = None
+    action_text = ''
     # main loop
     while running:
 
+        font = pygame.font.SysFont(None, 24)
+        msg_img = font.render(action_text, True, (128,128,128))
+        button_start = convert_cell_to_display_coords(16, 12)
+        button_dim = (450, 35)
+        button_colour = C_GRID_LINE
+        if selected_action is not None:
+            button_colour = (0,255,0)
+        action_button = pygame.draw.rect(screen, button_colour, (button_start[0], button_start[1], button_dim[0], button_dim[1]))
+        #font.size(action_text)[0], font.size(action_text)[1]
+        #print(font.size(action_text))
+        screen.blit(msg_img, (button_start[0] + (button_dim[0] - font.size(action_text)[0])//2, button_start[1] + (button_dim[1] - font.size(action_text)[1])//2))
+
         #draw_game(game, screen)
         pygame.display.flip()
+
         # event handling, gets all event from the event queue
         for event in pygame.event.get():
             # only do something if the event is of type QUIT
@@ -224,6 +242,7 @@ def main():
                             pygame.draw.rect(screen, C_GRID_LINE, (from_selected[0].x, from_selected[0].y, from_selected[0].width, from_selected[0].height), width=GRID_LINE_WIDTH)
                             from_selected = (from_rect, from_type, from_pile)
                             pygame.draw.rect(screen, (0,255,0), (from_rect.x, from_rect.y, from_rect.width, from_rect.height), width=GRID_LINE_WIDTH)
+                        selected_action = None
 
                 for to_rect, to_row_idx in to_row:
                     if to_rect.collidepoint(pos):
@@ -234,12 +253,29 @@ def main():
                             pygame.draw.rect(screen, C_GRID_LINE, (to_selected[0].x, to_selected[0].y, to_selected[0].width, to_selected[0].height), width=GRID_LINE_WIDTH)
                             to_selected = (to_rect, to_row_idx)
                             pygame.draw.rect(screen, (0,255,0), (to_rect.x, to_rect.y, to_rect.width, to_rect.height), width=GRID_LINE_WIDTH)
+                        selected_action = None
 
-                font = pygame.font.SysFont(None, 24)
-                img = font.render('', True, (128,128,128))
-                screen.blit(img, convert_cell_to_display_coords(16, 12))
-     
-     
+                if action_button.collidepoint(pos) and selected_action is not None:
+                    print(f'taking action {selected_action}')
+                    game.move(selected_action)
+                    draw_game(game, screen)
+
+                # get the action that corresponds to the selected tile and row
+                action_text = ''
+                if from_selected[1] is not None and to_selected[1] is not None and selected_action is None:
+                    for a_t_type, a_from_pile, a_to_row, a_nbr_tiles in game.available_actions(game):
+                        if a_t_type == from_selected[1] and a_from_pile == from_selected[2] and a_to_row == to_selected[1]:
+                            selected_action = (a_t_type, a_from_pile, a_to_row, a_nbr_tiles)
+                            break
+
+                    if selected_action is None:
+                        action_text = 'Invalid selections'
+                    else:
+                        action_text = f'Move {selected_action[3]} {TILE_NAMES[selected_action[0]]} tiles from pile {PILE_NAMES[selected_action[1]]} to row {ROW_NAMES[selected_action[2]]}' 
+
+
+
+                
 # run the main function only if this module is executed as the main script
 # (if you import this as a module then nothing is executed)
 if __name__=="__main__":
