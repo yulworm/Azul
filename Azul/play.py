@@ -16,6 +16,7 @@ to_row = list()
 TILE_NAMES = ['Azul', 'Yellow', 'Red', 'Black', 'White', '1st player']
 PILE_NAMES = ['Centre', '12', '3', '5', '7', '9']
 ROW_NAMES = ['1', '2', '3', '4', '5', 'Penalty']
+player_info = [['Player 1', None], ['Player 2', None]]
 
 def play(ai):
     game = Azul_game.Azul_game()
@@ -32,15 +33,21 @@ def play(ai):
 
 def draw_game(game, surface):
     
-    draw_player_mat(game.players[0], convert_cell_to_display_coords(0,0), surface, game.winner ==0)
+    draw_player_mat(game, convert_cell_to_display_coords(0,0), surface, 0)
 
     draw_factory(game.factory, convert_cell_to_display_coords(13,0), surface)
 
-    draw_player_mat(game.players[1], convert_cell_to_display_coords(25,0), surface, game.winner ==1)
+    draw_player_mat(game, convert_cell_to_display_coords(25,0), surface, 1)
 
-def draw_player_mat(mat, coords, surface, is_winner=False):
+def draw_player_mat(game, coords, surface, player_idx):
     #sub_s = surface.subsurface((coords[0], coords[1], CELL_DIM[0]*13, CELL_DIM[1]*12))
     #sub_s.fill(C_GRID_LINE)
+    mat = game.players[player_idx]
+
+    # we reset the to_row so that it only contains the positions of the current player
+    if game.current_player_idx == player_idx:
+       to_row.clear()
+       pass
 
     # draw wall grid
     contents = mat.get_wall_for_display()
@@ -68,7 +75,7 @@ def draw_player_mat(mat, coords, surface, is_winner=False):
             rect = pygame.draw.rect(surface, C_GRID_LINE, (x, y, TILE_SIZE[0], TILE_SIZE[1]), width=GRID_LINE_WIDTH)
             pygame.draw.rect(surface, C_TILE_BACKGROUND, (x, y, TILE_SIZE[0], TILE_SIZE[1]))
             draw_tile(contents[i][j],(x,y),surface)
-            if j == 0:
+            if j == 0 and game.current_player_idx == player_idx:
                 to_row.append((rect, i))
 
     # penalty
@@ -79,11 +86,23 @@ def draw_player_mat(mat, coords, surface, is_winner=False):
         for j in range(7):
             x = penalty_start[0] + CELL_DIM[0]*j
             y = penalty_start[1] + CELL_DIM[1]*i
-            pygame.draw.rect(surface, C_GRID_LINE, (x, y, TILE_SIZE[0], TILE_SIZE[1]), width=GRID_LINE_WIDTH)
+            rect = pygame.draw.rect(surface, C_GRID_LINE, (x, y, TILE_SIZE[0], TILE_SIZE[1]), width=GRID_LINE_WIDTH)
             pygame.draw.rect(surface, C_TILE_BACKGROUND, (x, y, TILE_SIZE[0], TILE_SIZE[1]))
-            if len(contents) > i*2 + j:
-                draw_tile(contents[i*2 + j],(x,y),surface)
+            if len(contents) > i*7 + j:
+                draw_tile(contents[i*7 + j],(x,y),surface)
+            if i*7 + j == 0 and game.current_player_idx == player_idx:
+                to_row.append((rect, 5))
             # yes, there could be extra tiles, but it doesn't affect the score after 7 anyway
+
+    # Name 
+    font = pygame.font.SysFont(None, 36)
+    name_text = f'{player_info[player_idx][0]}'
+    if game.current_player_idx == player_idx:
+        name_text = f'{name_text} - Current player'
+    name_img = font.render(name_text, True, (128,128,128))
+    name_start = convert_cell_to_display_coords(2,1)
+    name_start = (name_start[0]+coords[0], name_start[1]+coords[1])
+    surface.blit(name_img, name_start)
 
     # score
     font = pygame.font.SysFont(None, 36)
@@ -92,12 +111,22 @@ def draw_player_mat(mat, coords, surface, is_winner=False):
     score_start = (score_start[0]+coords[0], score_start[1]+coords[1])
     surface.blit(img, score_start)
 
-    if is_winner:
+    if game.winner == player_idx:
         flag = pygame.transform.scale(pygame.image.load(os.path.join('images','winner.jpg')),(120,160))
         flag.set_colorkey((254,254,254))
         flag_start = convert_cell_to_display_coords(9,0)
         flag_start = (flag_start[0]+coords[0], flag_start[1]+coords[1])
         surface.blit(flag, flag_start)
+
+    # Last action or current player
+    player_note = ''
+    if game.current_player_idx != player_idx and player_info[player_idx][1] is not None:
+        player_note = f'Last action: {get_action_for_display(player_info[player_idx][1])}'
+    font = pygame.font.SysFont(None, 24)
+    player_note_img = font.render(f'{player_note}', True, (128,128,128))
+    player_note_start = convert_cell_to_display_coords(1,12)
+    player_note_start = (player_note_start[0]+coords[0], player_note_start[1]+coords[1])
+    surface.blit(player_note_img, player_note_start)
 
 def draw_factory(factory, coords, surface):
     #sub_s = surface.subsurface((coords[0], coords[1], CELL_DIM[0]*11, CELL_DIM[1]*11))
@@ -176,6 +205,9 @@ def draw_tile(ttype, coords, surface):
 def convert_cell_to_display_coords(x, y):
     return ( CELL_DIM[0]*x, CELL_DIM[1]*y )
 
+def get_action_for_display(action):
+    return f'Move {action[3]} {TILE_NAMES[action[0]]} tiles from pile {PILE_NAMES[action[1]]} to row {ROW_NAMES[action[2]]}' 
+
 def main():
      
     # initialize the pygame module
@@ -210,7 +242,7 @@ def main():
 
         font = pygame.font.SysFont(None, 24)
         msg_img = font.render(action_text, True, (128,128,128))
-        button_start = convert_cell_to_display_coords(16, 12)
+        button_start = convert_cell_to_display_coords(14, 12)
         button_dim = (450, 35)
         button_colour = C_GRID_LINE
         if selected_action is not None:
@@ -256,8 +288,13 @@ def main():
                         selected_action = None
 
                 if action_button.collidepoint(pos) and selected_action is not None:
-                    print(f'taking action {selected_action}')
+                    #print(f'taking action {selected_action}')
+                    player_info[game.current_player_idx][1] = selected_action
                     game.move(selected_action)
+                    screen.blit(bkg, (0,0))
+                    from_selected = (None,None,None) # rect, type, from
+                    to_selected = (None, None) # rect, to row
+                    selected_action = None
                     draw_game(game, screen)
 
                 # get the action that corresponds to the selected tile and row
@@ -271,7 +308,7 @@ def main():
                     if selected_action is None:
                         action_text = 'Invalid selections'
                     else:
-                        action_text = f'Move {selected_action[3]} {TILE_NAMES[selected_action[0]]} tiles from pile {PILE_NAMES[selected_action[1]]} to row {ROW_NAMES[selected_action[2]]}' 
+                        action_text = get_action_for_display(selected_action)
 
 
 
