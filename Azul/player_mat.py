@@ -275,7 +275,7 @@ class player_mat(object):
 
     def get_penalty_stack_for_display(self):
         disp = list()
-        for tt in range(6):
+        for tt in reversed(range(6)):
             for i in range(self.penalty_stack[tt]):
                 disp.append(tt)
         return disp
