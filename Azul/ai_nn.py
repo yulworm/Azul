@@ -1,3 +1,5 @@
+import os
+import datetime
 import tools_ai
 import tensorflow as tf
 import numpy as np
@@ -182,3 +184,19 @@ class ai(object):
             metrics=["accuracy"])
 
         return model
+
+    def save_model(self, folder):
+        filename = f'{self.get_name()}_{datetime.datetime.now().strftime("%Y%m%d_%H%M")}.h5'
+
+        self.model.save(os.path.join(folder,filename))
+
+        return filename
+        #with open(os.path.join(folder,filename), 'wb') as model_file:
+        #
+        #  pickle.dump(ai, model_file)
+        #  print(os.path.abspath(model_file.name))
+
+        #return filename
+
+    def load_model(self, folder, filename):
+        self.model = tf.keras.models.load_model(os.path.join(folder,filename))
