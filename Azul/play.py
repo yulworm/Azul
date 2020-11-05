@@ -3,14 +3,17 @@ import pygame
 import Azul_game
 
 C_BACKGROUND = (255,255,255)
-C_GRID_LINE = (195,195,195)#(128,128,128)
+C_GRID_LINE = (234,234,234)#(128,128,128)
 C_TILE_BACKGROUND = (195,195,195)
-C_SCORE_TEXT = (100,100,100)
+C_FONT = (100,100,100)
+C_TILE_SELECTED = (84,243,180)
+C_BUTTON_DISABLED = (195,195,195)
+C_BUTTON_ENABLED = (84,243,180)
 TILE_SIZE = (30,30)
 GRID_LINE_WIDTH = 10
 CELL_DIM = ((TILE_SIZE[0] + GRID_LINE_WIDTH),(TILE_SIZE[1] + GRID_LINE_WIDTH))
 tile_images = list()
-tile_backgrounds = [(192,220,232),(243,185,85),(244,150,155),(28,29,32),(255,255,255)]     #['A', 'Y', 'R', 'B', 'W', 'P']
+tile_backgrounds = [(192,220,232),(243,185,85),(244,150,155),(105,105,105),(255,255,255)]     #['A', 'Y', 'R', 'B', 'W', 'P']
 from_tiles = list() # data = (rect, tile type, pile index)
 to_row = list()
 TILE_NAMES = ['Azul', 'Yellow', 'Red', 'Black', 'White', '1st player']
@@ -40,14 +43,11 @@ def draw_game(game, surface):
     draw_player_mat(game, convert_cell_to_display_coords(25,0), surface, 1)
 
 def draw_player_mat(game, coords, surface, player_idx):
-    #sub_s = surface.subsurface((coords[0], coords[1], CELL_DIM[0]*13, CELL_DIM[1]*12))
-    #sub_s.fill(C_GRID_LINE)
     mat = game.players[player_idx]
 
     # we reset the to_row so that it only contains the positions of the current player
     if game.current_player_idx == player_idx:
        to_row.clear()
-       pass
 
     # draw wall grid
     contents = mat.get_wall_for_display()
@@ -66,10 +66,8 @@ def draw_player_mat(game, coords, surface, player_idx):
     contents = mat.get_floor_for_display()
     floor_start = convert_cell_to_display_coords(7,3)
     floor_start = (floor_start[0]+coords[0], floor_start[1]+coords[1])
-    #print(f'draw floor {contents}')
     for i in range(5):
         for j in range(len(contents[i])):
-            #print(f'floor cell {i} {j} {contents[i][j]}')
             x = floor_start[0] + CELL_DIM[0]*j
             y = floor_start[1] + CELL_DIM[1]*i
             rect = pygame.draw.rect(surface, C_GRID_LINE, (x, y, TILE_SIZE[0], TILE_SIZE[1]), width=GRID_LINE_WIDTH)
@@ -99,14 +97,14 @@ def draw_player_mat(game, coords, surface, player_idx):
     name_text = f'{player_info[player_idx][0]}'
     if game.current_player_idx == player_idx:
         name_text = f'{name_text} - Current player'
-    name_img = font.render(name_text, True, (128,128,128))
+    name_img = font.render(name_text, True, C_FONT)
     name_start = convert_cell_to_display_coords(2,1)
     name_start = (name_start[0]+coords[0], name_start[1]+coords[1])
     surface.blit(name_img, name_start)
 
     # score
     font = pygame.font.SysFont(None, 36)
-    img = font.render(f'Score: {mat.get_total_score()}', True, (128,128,128))
+    img = font.render(f'Score: {mat.get_total_score()}', True, C_FONT)
     score_start = convert_cell_to_display_coords(2,2)
     score_start = (score_start[0]+coords[0], score_start[1]+coords[1])
     surface.blit(img, score_start)
@@ -123,14 +121,12 @@ def draw_player_mat(game, coords, surface, player_idx):
     if game.current_player_idx != player_idx and player_info[player_idx][1] is not None:
         player_note = f'Last action: {get_action_for_display(player_info[player_idx][1])}'
     font = pygame.font.SysFont(None, 24)
-    player_note_img = font.render(f'{player_note}', True, (128,128,128))
+    player_note_img = font.render(f'{player_note}', True, C_FONT)
     player_note_start = convert_cell_to_display_coords(1,12)
     player_note_start = (player_note_start[0]+coords[0], player_note_start[1]+coords[1])
     surface.blit(player_note_img, player_note_start)
 
 def draw_factory(factory, coords, surface):
-    #sub_s = surface.subsurface((coords[0], coords[1], CELL_DIM[0]*11, CELL_DIM[1]*11))
-
     disp_piles = factory.get_piles_for_display()
 
     draw_centre_pile(disp_piles[0], convert_cell_to_display_coords(17,4), surface, 0)
@@ -145,10 +141,14 @@ def draw_factory(factory, coords, surface):
 
     draw_outer_pile(disp_piles[5], convert_cell_to_display_coords(14,5), surface, 5)
 
+    # number of tiles in draw bag and discard
+    font = pygame.font.SysFont(None, 24)
+    remaining_tiles_img = font.render(f'{factory.get_tile_count_in_discard() + factory.get_tile_count_in_bag()} tiles remaining. Draw={factory.get_tile_count_in_bag()} Discard={factory.get_tile_count_in_discard()}', True, C_FONT)
+    surface.blit(remaining_tiles_img, convert_cell_to_display_coords(15,13))
+
 def draw_centre_pile(contents, coords, surface, pile_idx):
     for i in range(4):
         for j in range(4):
-            #print(f'floor cell {i} {j} {contents[i][j]}')
             x = coords[0] + CELL_DIM[0]*j
             y = coords[1] + CELL_DIM[1]*i
             rect = pygame.draw.rect(surface, C_GRID_LINE, (x, y, TILE_SIZE[0], TILE_SIZE[1]), width=GRID_LINE_WIDTH, border_radius=0)
@@ -199,7 +199,6 @@ def load_tile_images():
 def draw_tile(ttype, coords, surface):
     if ttype is None:
         return
-    #print(f'draw_tile {ttype}')
     surface.blit(tile_images[ttype],coords)
 
 def convert_cell_to_display_coords(x, y):
@@ -221,7 +220,7 @@ def main():
     load_tile_images()
      
     # create a surface on screen 
-    screen = pygame.display.set_mode((38*CELL_DIM[0],13*CELL_DIM[1]))
+    screen = pygame.display.set_mode((38*CELL_DIM[0],14*CELL_DIM[1]))
     bkg = pygame.transform.scale(pygame.image.load(os.path.join('images','background.jpg')),screen.get_size())
     screen.blit(bkg, (0,0))
     
@@ -240,16 +239,15 @@ def main():
     # main loop
     while running:
 
+        # display the action button
         font = pygame.font.SysFont(None, 24)
-        msg_img = font.render(action_text, True, (128,128,128))
-        button_start = convert_cell_to_display_coords(14, 12)
+        msg_img = font.render(action_text, True, C_FONT)
+        button_start = convert_cell_to_display_coords(14, 11)
         button_dim = (450, 35)
-        button_colour = C_GRID_LINE
+        button_colour = C_BUTTON_DISABLED
         if selected_action is not None:
-            button_colour = (0,255,0)
+            button_colour = C_BUTTON_ENABLED
         action_button = pygame.draw.rect(screen, button_colour, (button_start[0], button_start[1], button_dim[0], button_dim[1]))
-        #font.size(action_text)[0], font.size(action_text)[1]
-        #print(font.size(action_text))
         screen.blit(msg_img, (button_start[0] + (button_dim[0] - font.size(action_text)[0])//2, button_start[1] + (button_dim[1] - font.size(action_text)[1])//2))
 
         #draw_game(game, screen)
@@ -269,26 +267,25 @@ def main():
                     if from_rect.collidepoint(pos):
                         if from_selected[0] is None:
                             from_selected = (from_rect, from_type, from_pile)
-                            pygame.draw.rect(screen, (0,255,0), (from_rect.x, from_rect.y, from_rect.width, from_rect.height), width=GRID_LINE_WIDTH)
+                            pygame.draw.rect(screen, C_TILE_SELECTED, (from_rect.x, from_rect.y, from_rect.width, from_rect.height), width=GRID_LINE_WIDTH)
                         else:
                             pygame.draw.rect(screen, C_GRID_LINE, (from_selected[0].x, from_selected[0].y, from_selected[0].width, from_selected[0].height), width=GRID_LINE_WIDTH)
                             from_selected = (from_rect, from_type, from_pile)
-                            pygame.draw.rect(screen, (0,255,0), (from_rect.x, from_rect.y, from_rect.width, from_rect.height), width=GRID_LINE_WIDTH)
+                            pygame.draw.rect(screen, C_TILE_SELECTED, (from_rect.x, from_rect.y, from_rect.width, from_rect.height), width=GRID_LINE_WIDTH)
                         selected_action = None
 
                 for to_rect, to_row_idx in to_row:
                     if to_rect.collidepoint(pos):
                         if to_selected[0] is None:
                             to_selected = (to_rect, to_row_idx)
-                            pygame.draw.rect(screen, (0,255,0), (to_rect.x, to_rect.y, to_rect.width, to_rect.height), width=GRID_LINE_WIDTH)
+                            pygame.draw.rect(screen, C_TILE_SELECTED, (to_rect.x, to_rect.y, to_rect.width, to_rect.height), width=GRID_LINE_WIDTH)
                         else:
                             pygame.draw.rect(screen, C_GRID_LINE, (to_selected[0].x, to_selected[0].y, to_selected[0].width, to_selected[0].height), width=GRID_LINE_WIDTH)
                             to_selected = (to_rect, to_row_idx)
-                            pygame.draw.rect(screen, (0,255,0), (to_rect.x, to_rect.y, to_rect.width, to_rect.height), width=GRID_LINE_WIDTH)
+                            pygame.draw.rect(screen, C_TILE_SELECTED, (to_rect.x, to_rect.y, to_rect.width, to_rect.height), width=GRID_LINE_WIDTH)
                         selected_action = None
 
                 if action_button.collidepoint(pos) and selected_action is not None:
-                    #print(f'taking action {selected_action}')
                     player_info[game.current_player_idx][1] = selected_action
                     game.move(selected_action)
                     screen.blit(bkg, (0,0))
