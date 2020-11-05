@@ -277,7 +277,7 @@ class player_mat(object):
         disp = list()
         for tt in range(6):
             for i in range(self.penalty_stack[tt]):
-                tl.append(tt)
+                disp.append(tt)
         return disp
 
     def __str__(self):
