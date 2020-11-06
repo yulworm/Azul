@@ -12,14 +12,19 @@ import ai_nn
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
+#import seaborn as sns
+import time
 
 def main():
-    ai = train_ai(ai_nn.ai('F5x5',True), games_folder='data', nbr_new_games=800, interesting_cut_off=60)
+    ai = train_ai(ai_nn.ai('F5x5',True,epochs=40), games_folder='data', nbr_new_games=0, interesting_cut_off=60)
     
-    fn = save_model(ai)
+    filename = ai.save_model('models')
 
-    save_results( dueling_ai([read_model(fn), ai],nbr_matches=100) )
+    ai2 = ai_nn.ai('F5x5',True)
+    ai2.load_model('models',filename)
+
+    results = dueling_ai([ai, ai2],nbr_matches=500)
+    save_results(results)
 
 def holding():
     ai = train_ai(ai_nn.ai('F5x5',True), games_folder='data', nbr_new_games=0, interesting_cut_off=60)

@@ -1,6 +1,7 @@
 import os
 import pygame
 import Azul_game
+import ai_nn
 
 C_BACKGROUND = (255,255,255)
 C_GRID_LINE = (234,234,234)#(128,128,128)
@@ -19,20 +20,7 @@ to_row = list()
 TILE_NAMES = ['Azul', 'Yellow', 'Red', 'Black', 'White', '1st player']
 PILE_NAMES = ['Centre', '12', '3', '5', '7', '9']
 ROW_NAMES = ['1', '2', '3', '4', '5', 'Penalty']
-player_info = [['Player 1', None], ['Player 2', None]]
-
-def play(ai):
-    game = Azul_game.Azul_game()
-
-    # game dimension = 36 x 12
-
-    while game.winner is None:
-        if game.current_player_idx == 1:
-            action = ai.choose_action(game)
-            game.move( action )
-        else:
-            #wait for player
-            pass
+player_info = [['Player 1', None, None], ['Player 2', None, None]] #name, last action, ai agent
 
 def draw_game(game, surface):
     
@@ -207,7 +195,7 @@ def convert_cell_to_display_coords(x, y):
 def get_action_for_display(action):
     return f'Move {action[3]} {TILE_NAMES[action[0]]} tiles from pile {PILE_NAMES[action[1]]} to row {ROW_NAMES[action[2]]}' 
 
-def main():
+def play_game():
      
     # initialize the pygame module
     pygame.init()
@@ -260,56 +248,73 @@ def main():
                 # change the value to False, to exit the main loop
                 running = False
 
-            if event.type == pygame.MOUSEBUTTONUP:
-                pos = event.pos
+            # if the current player is human
+            if player_info[game.current_player_idx][2] is None:
+                if event.type == pygame.MOUSEBUTTONUP:
+                    pos = event.pos
 
-                for from_rect, from_type, from_pile in from_tiles:
-                    if from_rect.collidepoint(pos):
-                        if from_selected[0] is None:
-                            from_selected = (from_rect, from_type, from_pile)
-                            pygame.draw.rect(screen, C_TILE_SELECTED, (from_rect.x, from_rect.y, from_rect.width, from_rect.height), width=GRID_LINE_WIDTH)
-                        else:
-                            pygame.draw.rect(screen, C_GRID_LINE, (from_selected[0].x, from_selected[0].y, from_selected[0].width, from_selected[0].height), width=GRID_LINE_WIDTH)
-                            from_selected = (from_rect, from_type, from_pile)
-                            pygame.draw.rect(screen, C_TILE_SELECTED, (from_rect.x, from_rect.y, from_rect.width, from_rect.height), width=GRID_LINE_WIDTH)
+                    for from_rect, from_type, from_pile in from_tiles:
+                        if from_rect.collidepoint(pos):
+                            if from_selected[0] is None:
+                                from_selected = (from_rect, from_type, from_pile)
+                                pygame.draw.rect(screen, C_TILE_SELECTED, (from_rect.x, from_rect.y, from_rect.width, from_rect.height), width=GRID_LINE_WIDTH)
+                            else:
+                                pygame.draw.rect(screen, C_GRID_LINE, (from_selected[0].x, from_selected[0].y, from_selected[0].width, from_selected[0].height), width=GRID_LINE_WIDTH)
+                                from_selected = (from_rect, from_type, from_pile)
+                                pygame.draw.rect(screen, C_TILE_SELECTED, (from_rect.x, from_rect.y, from_rect.width, from_rect.height), width=GRID_LINE_WIDTH)
+                            selected_action = None
+
+                    for to_rect, to_row_idx in to_row:
+                        if to_rect.collidepoint(pos):
+                            if to_selected[0] is None:
+                                to_selected = (to_rect, to_row_idx)
+                                pygame.draw.rect(screen, C_TILE_SELECTED, (to_rect.x, to_rect.y, to_rect.width, to_rect.height), width=GRID_LINE_WIDTH)
+                            else:
+                                pygame.draw.rect(screen, C_GRID_LINE, (to_selected[0].x, to_selected[0].y, to_selected[0].width, to_selected[0].height), width=GRID_LINE_WIDTH)
+                                to_selected = (to_rect, to_row_idx)
+                                pygame.draw.rect(screen, C_TILE_SELECTED, (to_rect.x, to_rect.y, to_rect.width, to_rect.height), width=GRID_LINE_WIDTH)
+                            selected_action = None
+
+                    if action_button.collidepoint(pos) and selected_action is not None:
+                        player_info[game.current_player_idx][1] = selected_action
+                        game.move(selected_action)
+                        screen.blit(bkg, (0,0))
+                        from_selected = (None,None,None) # rect, type, from
+                        to_selected = (None, None) # rect, to row
                         selected_action = None
+                        draw_game(game, screen)
 
-                for to_rect, to_row_idx in to_row:
-                    if to_rect.collidepoint(pos):
-                        if to_selected[0] is None:
-                            to_selected = (to_rect, to_row_idx)
-                            pygame.draw.rect(screen, C_TILE_SELECTED, (to_rect.x, to_rect.y, to_rect.width, to_rect.height), width=GRID_LINE_WIDTH)
+                    # get the action that corresponds to the selected tile and row
+                    action_text = ''
+                    if from_selected[1] is not None and to_selected[1] is not None and selected_action is None:
+                        for a_t_type, a_from_pile, a_to_row, a_nbr_tiles in game.available_actions(game):
+                            if a_t_type == from_selected[1] and a_from_pile == from_selected[2] and a_to_row == to_selected[1]:
+                                selected_action = (a_t_type, a_from_pile, a_to_row, a_nbr_tiles)
+                                break
+
+                        if selected_action is None:
+                            action_text = 'Invalid selections'
                         else:
-                            pygame.draw.rect(screen, C_GRID_LINE, (to_selected[0].x, to_selected[0].y, to_selected[0].width, to_selected[0].height), width=GRID_LINE_WIDTH)
-                            to_selected = (to_rect, to_row_idx)
-                            pygame.draw.rect(screen, C_TILE_SELECTED, (to_rect.x, to_rect.y, to_rect.width, to_rect.height), width=GRID_LINE_WIDTH)
-                        selected_action = None
+                            action_text = get_action_for_display(selected_action)
 
-                if action_button.collidepoint(pos) and selected_action is not None:
-                    player_info[game.current_player_idx][1] = selected_action
-                    game.move(selected_action)
-                    screen.blit(bkg, (0,0))
-                    from_selected = (None,None,None) # rect, type, from
-                    to_selected = (None, None) # rect, to row
-                    selected_action = None
-                    draw_game(game, screen)
-
-                # get the action that corresponds to the selected tile and row
-                action_text = ''
-                if from_selected[1] is not None and to_selected[1] is not None and selected_action is None:
-                    for a_t_type, a_from_pile, a_to_row, a_nbr_tiles in game.available_actions(game):
-                        if a_t_type == from_selected[1] and a_from_pile == from_selected[2] and a_to_row == to_selected[1]:
-                            selected_action = (a_t_type, a_from_pile, a_to_row, a_nbr_tiles)
-                            break
-
-                    if selected_action is None:
-                        action_text = 'Invalid selections'
-                    else:
-                        action_text = get_action_for_display(selected_action)
+            # if the current player is an ai
+            else:
+                action = player_info[game.current_player_idx][2].choose_action(game)
+                player_info[game.current_player_idx][1] = action
+                game.move(action)
+                screen.blit(bkg, (0,0))
+                draw_game(game, screen)
 
 
+          
+def main():
+    ai = ai_nn.ai('F5x5')
+    ai.load_model('models', 'nn_F5x5.h5')
+    player_info[1][2] = ai
+    player_info[1][0] = ai.get_name()
 
-                
+    play_game()
+
 # run the main function only if this module is executed as the main script
 # (if you import this as a module then nothing is executed)
 if __name__=="__main__":
