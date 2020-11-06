@@ -62,7 +62,11 @@
     <Compile Include="tools_ai.py" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="play_models\" />
     <Folder Include="tests\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="play_models\nn_F5x5.h5" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
