@@ -151,6 +151,37 @@ class Azul_game():
     def get_total_tile_count(self):
         return sum(player.get_total_tile_count() for player in self.players) + self.factory.get_total_tile_count()
 
+    def get_current_player_and_factory(self):
+        full_info = list()
+
+        player_info = self.get_current_player_state_without_factory()
+
+        for i in range(6):
+            for f in self.factory.piles[i]:
+                # the value of the pile tile count is the proportion of all the tiles of that type. So, X / 20
+                player_info[i].append(f/20)
+
+            full_info.append( player_info[i] )
+            
+        return full_info
+
+    def get_current_player_state_without_factory(self):
+        """
+        This will return a 6x5 list
+        - merged player wall and floor
+        - final round indicator
+        - number of tiles in penalty divided by 7
+        """
+        wall_state = self.players[self.current_player_idx].get_merged_wall_and_floor()
+
+        # eventually I want to merge this with the factory, where there are 6 piles with 6 tiles - so 6x6
+        # I will add an extra row of info to the wall so that the wall has 6 rows as well. That way they can be put together nicely
+        extra_info = [int(self.is_last_round),self.players[self.current_player_idx].get_nbr_tiles_in_penalty()/7,0,0,0]
+
+        wall_state.append(extra_info)
+        
+        return wall_state
+
     def _is_coherent(self):
 
         # are all the tiles accounted for
