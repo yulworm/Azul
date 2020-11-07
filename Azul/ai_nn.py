@@ -126,12 +126,20 @@ class ai(object):
 
         if self.variation in ['conv_5x5', 'F5x5']:
             return np.array( game.players[player_idx].get_merged_wall_and_floor() )[:,:,np.newaxis]
+        elif self.variation in ['F6x5']:
+            return np.array( game.get_current_player_state_without_factory() )[:,:,np.newaxis]
+        elif self.variation in ['F6x11']:
+            return np.array( game.get_current_player_and_factory() )[:,:,np.newaxis]
 
     def get_model(self,variation):
         if variation == 'conv_5x5':
             return self.get_model_conv_5x5()
         elif self.variation == 'F5x5':
             return self.get_model_F5x5()
+        elif self.variation == 'F6x5':
+            return self.get_model_F6x5()
+        elif self.variation == 'F6x11':
+            return self.get_model_F6x11()
 
     def get_model_conv_5x5(self):
         """
@@ -169,6 +177,46 @@ class ai(object):
         model = tf.keras.models.Sequential()
 
         model.add( tf.keras.layers.Flatten(input_shape=(5,5)) )
+
+        model.add( tf.keras.layers.Dense(256,activation="relu") )
+    
+        #model.add( tf.keras.layers.Dropout(0.15) )
+
+        model.add( tf.keras.layers.Dense(256,activation="relu") )
+
+        model.add( tf.keras.layers.Dense(len(self.classification_actions), activation="softmax") )
+
+        model.compile(
+            optimizer="adam",
+            loss="categorical_crossentropy",
+            metrics=["accuracy"])
+
+        return model
+
+    def get_model_F6x5(self):
+        model = tf.keras.models.Sequential()
+
+        model.add( tf.keras.layers.Flatten(input_shape=(6,5)) )
+
+        model.add( tf.keras.layers.Dense(256,activation="relu") )
+    
+        #model.add( tf.keras.layers.Dropout(0.15) )
+
+        model.add( tf.keras.layers.Dense(256,activation="relu") )
+
+        model.add( tf.keras.layers.Dense(len(self.classification_actions), activation="softmax") )
+
+        model.compile(
+            optimizer="adam",
+            loss="categorical_crossentropy",
+            metrics=["accuracy"])
+
+        return model
+
+    def get_model_F6x11(self):
+        model = tf.keras.models.Sequential()
+
+        model.add( tf.keras.layers.Flatten(input_shape=(6,11)) )
 
         model.add( tf.keras.layers.Dense(256,activation="relu") )
     
