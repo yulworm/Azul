@@ -242,3 +242,10 @@ class tile_factory(object):
             raise ValueError(f'There are {self.get_total_tile_count()}, but there should never be more than 101')
 
         return True
+
+    def __eq__(self, value):
+        for i in range(len(self.piles)):
+            if self.piles[i] != value.piles[i]:
+                return False
+        
+        return True

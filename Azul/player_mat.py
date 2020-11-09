@@ -280,6 +280,20 @@ class player_mat(object):
                 disp.append(tt)
         return disp
 
+    def __eq__(self, value):
+        if self.penalty_stack != value.penalty_stack:
+            return False
+
+        for i in range(len(self.floor)):
+            if self.floor[i] != value.floor[i]:
+                return False
+
+        for i in range(len(self.wall)):
+            if self.wall[i] != value.wall[i]:
+                return False
+
+        return True
+
     def __str__(self):
         return_str = f'Score={self.get_total_score()}\n'
 

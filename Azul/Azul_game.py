@@ -187,6 +187,17 @@ class Azul_game():
         # are all the tiles accounted for
         assert 201 == self.get_total_tile_count()
 
+    def __eq__(self, value):
+        if self.factory != value.factory:
+            return False
+
+        for i in range(len(self.players)):
+            if self.players[i] != value.players[i]:
+                return False
+
+        print('games equal')
+        return True
+
     def __str__(self):
         return_str = 'Player 0\n'
         return_str += str( self.players[0] )
