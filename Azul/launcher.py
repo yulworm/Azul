@@ -1,6 +1,5 @@
 from ai_random import ai_random
 import ai_q
-#import play_dueling_ai
 import Azul_game
 import csv
 import pickle
@@ -12,18 +11,22 @@ import ai_nn
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-#import seaborn as sns
+import seaborn as sns
 import time
 
 def main():
-    ai = train_ai(ai_nn.ai('F5x5',True,epochs=40), games_folder='data', nbr_new_games=0, interesting_cut_off=60)
+    plot_stats_for_matches(read_training_matches('data'))
+    return
+    ai = train_ai(ai_nn.ai('F6x11',True,epochs=30), games_folder='data', nbr_new_games=500, interesting_cut_off=70)
     
-    filename = ai.save_model('models')
+    #filename = ai.save_model('models')
+    ai1 = ai_nn.ai('F5x5',True)
+    ai1.load_model('play_models','nn_F5x5.h5')
+    ai2 = ai_nn.ai('F6x11',True)
+    #ai2.load_model('models',filename)
 
-    ai2 = ai_nn.ai('F5x5',True)
-    ai2.load_model('models',filename)
-
-    results = dueling_ai([ai, ai2],nbr_matches=500)
+    ai2.load_model('models','nn_F6x11_20201105_2225.h5')
+    results = dueling_ai([ai, ai],nbr_matches=500)
     save_results(results)
 
 def holding():
@@ -57,7 +60,9 @@ def read_model(model_name):
 def train_ai(ai, nbr_new_games=0, games_folder=None, interesting_cut_off=50):
 
     if games_folder is not None:
-        ai.train_from_games( read_training_matches(games_folder) )
+        matches = read_training_matches(games_folder)
+        plot_stats_for_matches( matches )
+        ai.train_from_games( matches )
 
     if nbr_new_games > 0:
         ai = generate_save_training_matches_and_train_model(ai,f'{ai.get_name()}',nbr_new_games,interesting_cut_off,games_folder)
@@ -91,8 +96,6 @@ def plot_results(results, filename=None):
     #df = pd.DataFrame(scores_for_df, columns=[results[0][1], results[0][3]])
     df = pd.DataFrame(rd)
 
-    # bubble https://seaborn.pydata.org/examples/scatter_bubbles.html
-#    bubble = df.groupby(['nbr_turns','max_score']).agg(np.size)
 
     #sns.set(rc={'figure.figsize':(2,2)})
     
@@ -106,6 +109,44 @@ def plot_results(results, filename=None):
     ax2.grid()
 
     #plt.show(block=True)
+    if filename is not None:
+        plt.savefig(os.path.join('results',filename.replace('.csv','.png')))
+    else:
+        plt.show()
+
+def plot_stats_for_matches(matches, filename=None):
+    # nbr turns
+    # final score
+    # difference in score with winner
+    # was first player
+    # bubble https://seaborn.pydata.org/examples/scatter_bubbles.html
+#    bubble = df.groupby(['nbr_turns','max_score']).agg(np.size)
+    stats = list()
+    for i in range(len(matches)):
+        game_sequence = matches[i] # f_game, g_action, t_game
+        player = game_sequence[0][0].current_player_idx
+        # since the sequence only stores on half of the game, we have to double the length
+        nbr_turns = len(game_sequence) * 2
+        score = -1
+        if game_sequence[-1][2].winner is not None:
+            score = game_sequence[-1][2].players[player].get_total_score()
+
+        # if all the tiles are still on the factory tiles, then this is the first player's turn
+        first_player = game_sequence[0][0].factory.get_tile_count_in_piles() == 21 
+
+        stats.append((nbr_turns, score, first_player))
+
+    stats_df = pd.DataFrame(stats, columns=['nbr_turns','score','is_first_player'])
+    print(stats_df)
+    
+    grouped_stats_df = stats_df.groupby(['nbr_turns','score']).agg(np.size).reset_index()
+    grouped_stats_df.columns = ['nbr_turns','score','instances']
+    print(grouped_stats_df)
+
+    sns.relplot(x="nbr_turns", y="score", size="instances",
+            sizes=(40, 400), alpha=.5, palette="muted",
+            height=6, data=grouped_stats_df)
+
     if filename is not None:
         plt.savefig(os.path.join('results',filename.replace('.csv','.png')))
     else:
@@ -159,10 +200,10 @@ def generate_random_matches(nbr_interesting_saves,interesting_score=50):
         generate_and_save_training_matches(ais,f'random',min(saves_per_file, saves_remaining),interesting_score,'data')
         saves_remaining -= min(saves_per_file, saves_remaining)
 
-def generate_and_save_training_matches(ais, save_name, nbr_interesting_saves, interesting_score, folder_location):
+def generate_and_save_training_matches(ais, save_name, nbr_interesting_saves, interesting_score, folder_location, exclude_bad_moves=False):
 
     saved_games = list()
-    results = list()
+    #results = list()
     games_played = 0
     while nbr_interesting_saves > len(saved_games):
 
@@ -181,18 +222,23 @@ def generate_and_save_training_matches(ais, save_name, nbr_interesting_saves, in
 
             game_sequence[player].append( (start_state, action, copy.deepcopy(game)) )
 
-            # we are not interested in games where the player's scrore decreased at any time, that means they did something wrong
-            score_dropped[player] = score_dropped[player] or start_state.players[player].cummulative_score > game.players[player].cummulative_score
+            if exclude_bad_moves:
+                # we are not interested in games where the player's scrore decreased at any time, that means they did something wrong
+                score_dropped[player] = score_dropped[player] or start_state.players[player].cummulative_score > game.players[player].cummulative_score
 
             nbr_turns += 1
 
         games_played += 1
+
         for player in range(0,1):
+            # the final score is only really available in the final game state, so in order to have that final score for each player we need to update that state
+            game_sequence[player][-1] = (game_sequence[player][-1][0], game_sequence[player][-1][1], game)
+
             # if the score of the last moved played by a player is greater than the treashold, then we save it
             if game_sequence[player][-1][2].players[player].get_total_score() > interesting_score and not score_dropped[player]:
                 saved_games.append(game_sequence[player])
 
-                results.append((save_name, len(saved_games), game_sequence[player][-1][2].players[player].get_total_score(), len(game_sequence[player])))
+                #results.append((save_name, len(saved_games), game_sequence[player][-1][2].players[player].get_total_score(), len(game_sequence[player])))
 
     sys.stdout.write('\n')
 
@@ -240,6 +286,11 @@ def filter_training_matches(old_folder,new_folder):
             nbr_rejected += 1
             continue
 
+        # we don't have the actual final score
+        #if game_sequence[-1][2].winner is None:
+        #    nbr_rejected += 1
+        #    continue
+
         tranches[final_score//10].append(game_sequence)
 
     print(f'{nbr_rejected} games rejected')
@@ -268,4 +319,4 @@ def progress(count, total, status=''):
     sys.stdout.flush()
 
 if __name__ == "__main__":
-    main()
+        main()
